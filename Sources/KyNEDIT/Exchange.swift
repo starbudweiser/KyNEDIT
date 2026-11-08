@@ -109,7 +109,10 @@ enum Exchange {
             let len = s.tout - s.tin
             // Un clip d'une autre cadence que la séquence garde sa durée en secondes : on convertit en images de la séquence.
             let lenSeq = s.clip.fps == seqFPS ? len : max(1, Int((Double(len) / s.clip.fps * seqFPS).rounded()))
-            spine += "            <asset-clip ref=\"\(assetID[s.clip.path]!)\" name=\"\(esc(s.name))\" offset=\"\(fcpTime(frames: offset, fps: seqFPS))\" start=\"\(fcpTime(frames: s.tin, fps: s.clip.fps))\" duration=\"\(fcpTime(frames: lenSeq, fps: seqFPS))\" format=\"\(fmtID[Fmt(w: s.clip.width, h: s.clip.height, fps: s.clip.fps)]!)\" tcFormat=\"NDF\"/>\n"
+            let inside = s.clip.markers.filter { frames($0.time, s.clip.fps) >= s.tin && frames($0.time, s.clip.fps) < s.tout }
+            spine += "            <asset-clip ref=\"\(assetID[s.clip.path]!)\" name=\"\(esc(s.name))\" offset=\"\(fcpTime(frames: offset, fps: seqFPS))\" start=\"\(fcpTime(frames: s.tin, fps: s.clip.fps))\" duration=\"\(fcpTime(frames: lenSeq, fps: seqFPS))\" format=\"\(fmtID[Fmt(w: s.clip.width, h: s.clip.height, fps: s.clip.fps)]!)\" tcFormat=\"NDF\"\(inside.isEmpty ? "/>" : ">")\n"
+            for m in inside { spine += "              <marker start=\"\(fcpTime(frames: frames(m.time, s.clip.fps), fps: s.clip.fps))\" duration=\"\(fcpTime(frames: 1, fps: s.clip.fps))\" value=\"\(esc(m.label))\"/>\n" }
+            if !inside.isEmpty { spine += "            </asset-clip>\n" }
             offset += lenSeq
         }
         var out = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE fcpxml>\n<fcpxml version=\"1.11\">\n  <resources>\n"
@@ -148,27 +151,27 @@ enum Exchange {
             let lenSeq = c.fps == seqFPS ? len : max(1, Int((Double(len) / c.fps * seqFPS).rounded()))
             itemNo += 1
             let file = fileXML(c)
-            var item = "<clipitem id=\"clipitem-\(itemNo)\"><name>\(esc(s.name))</name><enabled>TRUE</enabled><duration>\(frames(c.duration, c.fps))</duration>\(rate(c.fps))<start>\(position)</start><end>\(position + lenSeq)</end><in>\(s.tin)</in><out>\(s.tout)</out>"
+            var item = "<clipitem id=\"clipitem-\(itemNo)\"><name>\(esc(s.name))</name><duration>\(frames(c.duration, c.fps))</duration>\(rate(c.fps))<start>\(position)</start><end>\(position + lenSeq)</end><enabled>TRUE</enabled><in>\(s.tin)</in><out>\(s.tout)</out>"
             item += file
             for m in c.markers where frames(m.time, c.fps) >= s.tin && frames(m.time, c.fps) < s.tout {
                 let f = frames(m.time, c.fps)
                 item += "<marker><name>\(esc(m.label))</name><comment></comment><in>\(f)</in><out>\(f)</out></marker>"
             }
             if !c.note.isEmpty { item += "<comments><mastercomment1>\(esc(c.note))</mastercomment1></comments>" }
-            video += item + "<link><linkclipref>clipitem-\(itemNo)</linkclipref><mediatype>video</mediatype><trackindex>1</trackindex><clipindex>\(itemNo)</clipindex></link></clipitem>"
+            video += item + "</clipitem>"
             if c.hasAudio {
                 for ch in 1...min(c.audioChannels, 2) {
-                    audioTracks[ch, default: ""] += "<clipitem id=\"clipitem-a\(ch)-\(itemNo)\"><name>\(esc(s.name))</name><enabled>TRUE</enabled><duration>\(frames(c.duration, c.fps))</duration>\(rate(c.fps))<start>\(position)</start><end>\(position + lenSeq)</end><in>\(s.tin)</in><out>\(s.tout)</out><file id=\"\(fileIDs[c.path]!)\"/><sourcetrack><mediatype>audio</mediatype><trackindex>\(ch)</trackindex></sourcetrack></clipitem>"
+                    audioTracks[ch, default: ""] += "<clipitem id=\"clipitem-a\(ch)-\(itemNo)\"><name>\(esc(s.name))</name><duration>\(frames(c.duration, c.fps))</duration>\(rate(c.fps))<start>\(position)</start><end>\(position + lenSeq)</end><enabled>TRUE</enabled><in>\(s.tin)</in><out>\(s.tout)</out><file id=\"\(fileIDs[c.path]!)\"/><sourcetrack><mediatype>audio</mediatype><trackindex>\(ch)</trackindex></sourcetrack></clipitem>"
                 }
             }
             position += lenSeq
         }
         var out = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE xmeml>\n<xmeml version=\"4\">\n<sequence id=\"sequence-1\"><name>\(esc(name))</name><duration>\(position)</duration>\(rate(seqFPS))"
         out += "<timecode>\(rate(seqFPS))<string>00:00:00:00</string><frame>0</frame><displayformat>NDF</displayformat></timecode>"
-        out += "<media><video><format><samplecharacteristics>\(rate(seqFPS))<width>\(seqW)</width><height>\(seqH)</height><pixelaspectratio>square</pixelaspectratio><fielddominance>none</fielddominance></samplecharacteristics></format><track>\(video)</track></video>"
+        out += "<media><video><format><samplecharacteristics>\(rate(seqFPS))<width>\(seqW)</width><height>\(seqH)</height><pixelaspectratio>square</pixelaspectratio><fielddominance>none</fielddominance></samplecharacteristics></format><track>\(video)<enabled>TRUE</enabled><locked>FALSE</locked></track></video>"
         if !audioTracks.isEmpty {
             out += "<audio><numOutputChannels>2</numOutputChannels>"
-            for k in audioTracks.keys.sorted() { out += "<track>\(audioTracks[k]!)</track>" }
+            for k in audioTracks.keys.sorted() { out += "<track>\(audioTracks[k]!)<enabled>TRUE</enabled><locked>FALSE</locked></track>" }
             out += "</audio>"
         }
         _ = seq

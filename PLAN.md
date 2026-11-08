@@ -109,4 +109,5 @@ AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, An
 - **Final Cut Pro et DaVinci Resolve** : FCPXML 1.11 (un événement avec les clips entiers, plus un projet qui enchaîne les sous-clips ou les clips entiers). Validé contre la DTD FCPXML 1.11 fournie par Final Cut Pro 12 (`xmllint --dtdvalid`).
 - **Premiere Pro** : XML « xmeml » v4 (séquence, pistes vidéo et audio, marqueurs), vérifié bien formé.
 - Boutons RESOLVE / FINAL CUT PRO / PREMIERE PRO dans le lecteur : écrivent le fichier dans le dossier de sortie, puis « OUVRIR DANS … » (action explicite).
-- **Reste à faire** : essais d'import réels dans les trois logiciels.
+- **Import réel dans DaVinci Resolve 21 (script)** : le FCPXML et le XML Premiere donnent la même timeline (5 clips, mêmes positions et durées, piste audio présente) ; 1 image d'écart sur un clip à 30 i/s mis en séquence 23,976. Les marqueurs ne sont pas vus par Resolve à l'import. Projets de test supprimés ensuite.
+- **Reste à faire** : essais réels dans Final Cut Pro et Premiere Pro (interface).
