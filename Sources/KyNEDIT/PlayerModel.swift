@@ -20,7 +20,7 @@ final class PlayerModel {
     /// Clip Blackmagic RAW : images décodées une à une par le SDK (AVPlayer ne lit pas ce format).
     var usesBRAW = false
     var brawImage: CGImage?
-    private var braw: BRAWClipHandle?
+    private var braw: RawDecoder?
     private var brawTask: Task<Void, Never>?
     private var playLoop: Task<Void, Never>?
     private var observer: Any?
@@ -43,7 +43,7 @@ final class PlayerModel {
         fps = (info?.fps ?? 0) > 0 ? info!.fps : 25
         duration = info?.duration ?? 0
         brawTask?.cancel(); playLoop?.cancel(); braw = nil; brawImage = nil; usesBRAW = false
-        if clip.rawDecodable, let handle = BRAWClipHandle(path: clip.path) {
+        if clip.rawDecodable, let handle = Raw.open(clip.path) {
             braw = handle; usesBRAW = true; playable = true
             fps = handle.fps > 0 ? handle.fps : 25; duration = handle.duration
             player.replaceCurrentItem(with: nil)

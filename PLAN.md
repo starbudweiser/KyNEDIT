@@ -95,4 +95,6 @@ AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, An
 
 **Chargement depuis `/Applications/Blackmagic RAW`** : bloqué pendant plusieurs minutes par la vérification de signature de macOS, avec une fenêtre « endommagé » ; la copie du framework extraite du SDK se charge en 0,3 s.
 
-**R3D, ARRIRAW, Canon CRM : en attente de leurs SDK** (RED sur demande, ARRI sur inscription, Canon). Exemples publics repérés : [RED](https://www.reddigitalcinema.com/sample-r3d-files) (ZIP de 347 Mo à 18 Go), [ARRI](https://www.arri.com/en/learn/camera-systems/camera-sample-footage-reference-image) (liens Frame.io). Prévoir un protocole `RawDecoder` pour brancher chaque format.
+**R3D : SDK RED 9.2.1 intégré, décodage CPU, non testé faute de clip.** Pont `Sources/CRED` ; le SDK reste dans `vendor/R3DSDK` (hors dépôt) car la licence RED interdit de redistribuer les en-têtes, les exemples et la documentation (seules les dylibs `Redistributable/mac`, en l'état, peuvent accompagner l'appli, sous un contrat d'utilisation final). Sans `vendor/`, l'appli compile sans R3D. Suite : décodage GPU Metal, profondeur 16 bits.
+
+**ARRIRAW, Canon CRM : en attente de leurs SDK** (RED sur demande, ARRI sur inscription, Canon). Exemples publics repérés : [RED](https://www.reddigitalcinema.com/sample-r3d-files) (ZIP de 347 Mo à 18 Go), [ARRI](https://www.arri.com/en/learn/camera-systems/camera-sample-footage-reference-image) (liens Frame.io). Prévoir un protocole `RawDecoder` pour brancher chaque format.

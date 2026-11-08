@@ -10,6 +10,8 @@ APP="$DEST/$NAME.app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$NAME"
 # SDK Blackmagic RAW : framework embarqué (vendor/, hors dépôt) pour lire et exporter le BRAW.
+# SDK RED : bibliothèques dynamiques à côté de l'exécutable (Redistributable, copiées telles quelles).
+if [ -d vendor/R3DSDK/Redistributable/mac ]; then mkdir -p "$APP/Contents/Frameworks"; cp vendor/R3DSDK/Redistributable/mac/*.dylib "$APP/Contents/Frameworks/"; fi
 if [ -d vendor/BlackmagicRawAPI.framework ]; then mkdir -p "$APP/Contents/Frameworks"; ditto vendor/BlackmagicRawAPI.framework "$APP/Contents/Frameworks/BlackmagicRawAPI.framework"; fi
 ICON=""; for f in assets/*.icns; do [ -f "$f" ] && { cp "$f" "$APP/Contents/Resources/AppIcon.icns"; ICON="AppIcon"; }; done
 cat > "$APP/Contents/Info.plist" <<PL

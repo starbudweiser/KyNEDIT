@@ -96,9 +96,9 @@ final class ThumbService: @unchecked Sendable {
         return Loaded(jpeg: data, info: info)
     }
 
-    /// Image BRAW : décodée par le SDK à l'échelle 1/8, puis réduite à la taille des vignettes.
-    private func generateBRAW(_ clip: Clip, info: MediaInfo?) -> CGImage? {
-        guard let h = BRAWClipHandle(path: clip.path), h.frameCount > 0 else { return nil }
+    /// Image RAW (BRAW, R3D) : décodée par le SDK à l'échelle 1/8, puis réduite à la taille des vignettes.
+    private func generateRaw(_ clip: Clip, info: MediaInfo?) -> CGImage? {
+        guard let h = Raw.open(clip.path), h.frameCount > 0 else { return nil }
         let index = min(h.frameCount - 1, Int(Double(h.frameCount) * 0.1))
         guard let big = h.cgImage(index, scale: 3) else { return nil }
         let side = Self.maxSide, scale = Double(side) / Double(max(big.width, big.height))
@@ -112,7 +112,7 @@ final class ThumbService: @unchecked Sendable {
     }
 
     private func generate(_ clip: Clip, info: MediaInfo?) async -> CGImage? {
-        if clip.ext == "braw" { return generateBRAW(clip, info: info) }
+        if clip.isRaw { return generateRaw(clip, info: info) }
         let url = URL(fileURLWithPath: clip.path)
         let side = Self.maxSide
         if clip.kind == .image {

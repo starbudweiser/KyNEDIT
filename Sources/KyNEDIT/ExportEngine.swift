@@ -39,9 +39,9 @@ final class Transcoder: @unchecked Sendable {
 
     /// Retourne la durée écrite (secondes). `progress` reçoit 0…1.
     func run(progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
-        if ["braw", "r3d", "ari", "arx", "crm"].contains((path as NSString).pathExtension.lowercased()) && !(path.lowercased().hasSuffix(".braw") && BRAWClipHandle.available) { throw ExportError(message: L("export.raw")) }
-        if path.lowercased().hasSuffix(".braw") { // AVFoundation ne lit pas le BRAW : chemin SDK
-            guard let clip = BRAWClipHandle(path: path) else { throw ExportError(message: "SDK Blackmagic RAW introuvable ou clip illisible.") }
+        if ["braw", "r3d", "ari", "arx", "crm"].contains((path as NSString).pathExtension.lowercased()) && !Raw.decodable(ext: (path as NSString).pathExtension.lowercased()) { throw ExportError(message: L("export.raw")) }
+        if Raw.decodable(ext: (path as NSString).pathExtension.lowercased()) { // AVFoundation ne lit pas le RAW : chemin SDK
+            guard let clip = Raw.open(path) else { throw ExportError(message: "SDK RAW introuvable ou clip illisible.") }
             let start = max(0, tin ?? 0), end = min(tout ?? clip.duration, clip.duration)
             let part = output.deletingLastPathComponent().appendingPathComponent(output.lastPathComponent + ".part")
             try? FileManager.default.removeItem(at: part)
@@ -120,7 +120,7 @@ final class Transcoder: @unchecked Sendable {
 
     /// Export d'un clip Blackmagic RAW : images décodées par le SDK (BGRA 8 bits, pleine résolution), audio converti en PCM 16 bits.
     private func runBRAW(start: Double, end: Double, part: URL, progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
-        guard let clip = BRAWClipHandle(path: path) else { throw ExportError(message: "SDK Blackmagic RAW introuvable ou clip illisible.") }
+        guard let clip = Raw.open(path) else { throw ExportError(message: "SDK RAW introuvable ou clip illisible.") }
         let fps = clip.fps > 0 ? clip.fps : 24
         let first = max(0, Int((start * fps).rounded(.down))), last = min(clip.frameCount, Int((end * fps).rounded(.down)))
         guard last > first else { throw ExportError(message: "Plage vide.") }
@@ -248,12 +248,12 @@ final class Transcoder: @unchecked Sendable {
 
 /// Boucle vidéo BRAW : décode chaque image avec le SDK et l'écrit dans un tampon de l'encodeur.
 final class BRAWVideoJob: @unchecked Sendable {
-    private let clip: BRAWClipHandle, input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor
+    private let clip: RawDecoder, input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor
     private let first: Int, last: Int, fps: Double
     private unowned let transcoder: Transcoder
     var error: Error?
 
-    init(clip: BRAWClipHandle, input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor, first: Int, last: Int, fps: Double, transcoder: Transcoder) {
+    init(clip: RawDecoder, input: AVAssetWriterInput, adaptor: AVAssetWriterInputPixelBufferAdaptor, first: Int, last: Int, fps: Double, transcoder: Transcoder) {
         self.clip = clip; self.input = input; self.adaptor = adaptor; self.first = first; self.last = last; self.fps = fps; self.transcoder = transcoder
     }
 
@@ -291,9 +291,9 @@ final class BRAWVideoJob: @unchecked Sendable {
 
 /// Boucle audio BRAW : PCM du SDK converti en 16 bits, par blocs de 4096 échantillons.
 final class BRAWAudioJob: @unchecked Sendable {
-    private let clip: BRAWClipHandle, input: AVAssetWriterInput, from: Int, to: Int
+    private let clip: RawDecoder, input: AVAssetWriterInput, from: Int, to: Int
 
-    init(clip: BRAWClipHandle, input: AVAssetWriterInput, from: Int, to: Int) {
+    init(clip: RawDecoder, input: AVAssetWriterInput, from: Int, to: Int) {
         self.clip = clip; self.input = input; self.from = from; self.to = min(to, clip.audio?.samples ?? 0)
     }
 
