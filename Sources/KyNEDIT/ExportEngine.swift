@@ -39,6 +39,7 @@ final class Transcoder: @unchecked Sendable {
 
     /// Retourne la durée écrite (secondes). `progress` reçoit 0…1.
     func run(progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
+        if ["braw", "r3d", "ari", "arx", "crm"].contains((path as NSString).pathExtension.lowercased()) { throw ExportError(message: L("export.raw")) }
         let asset = AVURLAsset(url: URL(fileURLWithPath: path))
         guard let vTrack = try await asset.loadTracks(withMediaType: .video).first else { throw ExportError(message: "Aucune piste vidéo.") }
         let (size, fps, transform) = try await vTrack.load(.naturalSize, .nominalFrameRate, .preferredTransform)

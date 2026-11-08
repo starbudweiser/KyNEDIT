@@ -84,3 +84,12 @@ Critères d'acceptation v1 : ouverture d'un dossier de 10 000 clips < 2 s (index
 
 AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, Animation/RLE) ni MXF/MKV/AVI. `FFmpegTool` prend le relais pour la sonde (ffprobe) et la vignette (ffmpeg), seulement quand AVFoundation échoue. Il cherche d'abord un exécutable embarqué (`Resources/bin`), puis Homebrew.
 **À faire avant toute diffusion :** le ffmpeg Homebrew est GPL (x264/x265) et ne doit pas être embarqué tel quel ; compiler un ffmpeg LGPL minimal (décodeurs seuls, sans x264/x265), le signer et le placer dans `Resources/bin`.
+
+## 8. Formats RAW (état au 2026-11-08)
+
+Aucun fichier BRAW, R3D ou ARRIRAW n'existe sur les disques de ce Mac, et aucun SDK de développement n'est installé (seuls des moteurs d'exécution embarqués dans DaVinci Resolve, Premiere Pro et Blackmagic RAW Player, qu'on ne peut ni lier ni redistribuer). L'appli signale donc ces fichiers (badge « RAW », message clair dans le lecteur et à l'export) sans tenter de les décoder.
+**Pour la suite :**
+- **BRAW** : SDK gratuit de Blackmagic (licence à accepter par l'utilisateur) ; l'API COM se charge au runtime depuis `BlackmagicRawAPI.framework`.
+- **R3D** : SDK RED sur demande, accord de licence.
+- **ARRIRAW** : ARRI Image SDK, licence/inscription.
+- Prévoir un protocole `RawDecoder` (sonde, image à un instant, flux d'images) branché sur la sonde, les vignettes, le lecteur et l'export.

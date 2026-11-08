@@ -44,6 +44,11 @@ struct ClipCard: View {
                             Text(clip.ext.uppercased()).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.subtle)
                         }
                     }.clipped()
+                if clip.isRaw {
+                    Text(L("raw.badge")).font(.system(size: 10, weight: .semibold)).foregroundColor(.white)
+                        .padding(.horizontal, 5).padding(.vertical, 1).background(Color(hex: 0x0369A1), in: RoundedRectangle(cornerRadius: 3))
+                        .padding(5).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                }
                 if let m = meta, m.rating > 0 || m.color > 0 {
                     HStack(spacing: 4) {
                         if m.color > 0 { Circle().fill(labelColors[m.color]).frame(width: 8, height: 8) }

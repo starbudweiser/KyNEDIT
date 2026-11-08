@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "raw.badge": "RAW", "export.raw": "Format RAW : l'export demande le SDK du fabricant, non installé.", "player.raw": "Format RAW : lecture indisponible sans le SDK du fabricant.",
         "export.subclip.one": "Exporte le sous-clip",
         "export.lut": "Avec le LUT « %@ »", "action.queue.n": "AJOUTER %d CLIPS À LA FILE", "export.multi": "%d clips sélectionnés",
         "export.title": "Export", "export.folder": "Dossier de sortie", "export.choose": "Choisir…", "action.queue": "AJOUTER À LA FILE", "export.state.waiting": "En attente", "export.state.running": "En cours", "export.state.done": "Terminé", "export.state.failed": "Échec", "export.state.cancelled": "Annulé", "action.clear": "VIDER LES TERMINÉS", "export.retry": "Relancer", "export.speed": "%.1f× temps réel", "export.subclips": "Exporte les %d sous-clips", "export.novideo": "Seuls les clips vidéo s'exportent.", "export.whole": "Exporte le clip entier",
@@ -29,6 +30,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "raw.badge": "RAW", "export.raw": "RAW format: export needs the manufacturer's SDK, which is not installed.", "player.raw": "RAW format: playback is unavailable without the manufacturer's SDK.",
         "export.subclip.one": "Exports the subclip",
         "export.lut": "With LUT “%@”", "action.queue.n": "ADD %d CLIPS TO QUEUE", "export.multi": "%d clips selected",
         "export.title": "Export", "export.folder": "Output folder", "export.choose": "Choose…", "action.queue": "ADD TO QUEUE", "export.state.waiting": "Waiting", "export.state.running": "Running", "export.state.done": "Done", "export.state.failed": "Failed", "export.state.cancelled": "Cancelled", "action.clear": "CLEAR FINISHED", "export.retry": "Retry", "export.speed": "%.1f× real time", "export.subclips": "Exports the %d subclips", "export.novideo": "Only video clips can be exported.", "export.whole": "Exports the whole clip",
@@ -55,6 +57,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "raw.badge": "RAW", "export.raw": "Formato RAW: la exportación requiere el SDK del fabricante, no instalado.", "player.raw": "Formato RAW: reproducción no disponible sin el SDK del fabricante.",
         "export.subclip.one": "Exporta el subclip",
         "export.lut": "Con el LUT «%@»", "action.queue.n": "AÑADIR %d CLIPS A LA COLA", "export.multi": "%d clips seleccionados",
         "export.title": "Exportación", "export.folder": "Carpeta de salida", "export.choose": "Elegir…", "action.queue": "AÑADIR A LA COLA", "export.state.waiting": "En espera", "export.state.running": "En curso", "export.state.done": "Terminado", "export.state.failed": "Error", "export.state.cancelled": "Cancelado", "action.clear": "QUITAR TERMINADOS", "export.retry": "Reintentar", "export.speed": "%.1f× tiempo real", "export.subclips": "Exporta los %d subclips", "export.novideo": "Solo se exportan clips de vídeo.", "export.whole": "Exporta el clip completo",
@@ -81,6 +84,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "raw.badge": "RAW", "export.raw": "Formato RAW: l'esportazione richiede l'SDK del produttore, non installato.", "player.raw": "Formato RAW: riproduzione non disponibile senza l'SDK del produttore.",
         "export.subclip.one": "Esporta il sottoclip",
         "export.lut": "Con il LUT «%@»", "action.queue.n": "AGGIUNGI %d CLIP ALLA CODA", "export.multi": "%d clip selezionati",
         "export.title": "Esportazione", "export.folder": "Cartella di destinazione", "export.choose": "Scegli…", "action.queue": "AGGIUNGI ALLA CODA", "export.state.waiting": "In attesa", "export.state.running": "In corso", "export.state.done": "Completato", "export.state.failed": "Errore", "export.state.cancelled": "Annullato", "action.clear": "RIMUOVI COMPLETATI", "export.retry": "Riprova", "export.speed": "%.1f× tempo reale", "export.subclips": "Esporta i %d sottoclip", "export.novideo": "Si esportano solo clip video.", "export.whole": "Esporta il clip intero",

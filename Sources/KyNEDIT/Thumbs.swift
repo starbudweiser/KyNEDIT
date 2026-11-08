@@ -59,6 +59,7 @@ final class ThumbService: @unchecked Sendable {
     func clearMemory() { memory.removeAllObjects(); infoMemory.removeAllObjects() }
 
     func load(_ clip: Clip) async -> Loaded {
+        if clip.isRaw { return Loaded() } // pas de décodeur RAW : inutile d'essayer AVFoundation et ffmpeg
         let k = key(clip)
         // 1. en-têtes : mémoire puis base
         var info: MediaInfo?

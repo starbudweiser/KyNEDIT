@@ -11,6 +11,8 @@ struct Clip: Identifiable, Hashable, Sendable {
     let size: Int64
     let mtime: Double
     let kind: MediaKind
+    /// Formats RAW de caméra : leur décodage demande le SDK du fabricant (BRAW, R3D, ARRIRAW, Canon RAW).
+    var isRaw: Bool { ["braw", "r3d", "ari", "arx", "crm"].contains(ext) }
 }
 
 struct KnownDirs: Sendable {
