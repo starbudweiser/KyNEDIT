@@ -51,6 +51,14 @@ struct PlayerPanel: View {
                     button(L("player.subclip"), main: true) { p.addSubclip() }
                     button(p.lutName.map { $0.count > 12 ? String($0.prefix(12)) + "…" : $0 } ?? L("player.lut")) { chooseLUT() }
                     if p.lutName != nil { button("✕") { p.applyLUT(nil) }.help(L("player.nolut")) }
+                    Spacer(minLength: 4)
+                    ForEach(NLE.allCases, id: \.self) { n in button(n.title.uppercased()) { model.sendToNLE(n) }.help(L("exchange.hint")) }
+                }
+                if let m = model.exchangeMessage {
+                    HStack(spacing: 10) {
+                        Text(m.text).font(.system(size: 11)).foregroundColor(Socle.muted).lineLimit(1).truncationMode(.middle)
+                        if m.url.pathExtension == "fcpxml" || m.url.pathExtension == "xml" { button(L("exchange.open", m.nle.title.uppercased())) { model.openExchange() } }
+                    }
                 }
                 HStack(alignment: .top, spacing: 16) {
                     list(L("player.markers"), p.markers.map { m in (m.id, "\(PlayerModel.timecode(m.time, fps: p.fps))  \(m.label)", { p.seek(m.time) }, { p.removeMarker(m) }) })

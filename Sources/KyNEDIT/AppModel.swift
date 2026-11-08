@@ -10,6 +10,7 @@ final class AppModel {
     var selected: Clip?
     var selection: Set<String> = []
     var selectedInfo: MediaInfo?
+    var exchangeMessage: (text: String, url: URL, nle: NLE)?
     var meta: [String: ClipMeta] = [:]
     var ratingMin = 0 { didSet { refresh() } }
     var colorFilter = 0 { didSet { refresh() } }
@@ -89,6 +90,33 @@ final class AppModel {
 
     /// Tous les clips vidéo sélectionnés, dans l'ordre de la liste.
     func addSelectionToExport() { for c in clips where selection.contains(c.path) && c.kind == .video { addExport(c) } }
+
+    /// Envoie les clips sélectionnés (ou le clip ouvert) vers un logiciel de montage : écrit un FCPXML ou un XML Premiere dans le dossier de sortie.
+    func sendToNLE(_ nle: NLE) {
+        let chosen = clips.filter { selection.contains($0.path) }
+        let list = chosen.isEmpty ? (selected.map { [$0] } ?? []) : chosen
+        let catalog = catalog, thumbs = thumbs, meta = meta, dir = exports.outputDir
+        let title = (root?.lastPathComponent ?? "kYNEDIT").replacingOccurrences(of: "/", with: "-")
+        Task {
+            let items = await Exchange.collect(list, catalog: catalog, thumbs: thumbs, meta: meta)
+            guard !items.isEmpty else { exchangeMessage = (L("exchange.empty"), URL(fileURLWithPath: dir), nle); return }
+            do {
+                let url = try Exchange.write(items, for: nle, to: dir, title: title)
+                exchangeMessage = (L("exchange.created", url.lastPathComponent), url, nle)
+            } catch { exchangeMessage = (error.localizedDescription, URL(fileURLWithPath: dir), nle) }
+        }
+    }
+
+    /// Ouvre le fichier d'échange dans le logiciel (action explicite de l'utilisateur) ; à défaut, dans le Finder.
+    func openExchange() {
+        guard let m = exchangeMessage else { return }
+        let apps = (try? FileManager.default.contentsOfDirectory(atPath: "/Applications")) ?? []
+        if let name = apps.first(where: { n in m.nle.bundleHints.contains { n.hasPrefix($0) } }) {
+            let appURL = URL(fileURLWithPath: "/Applications/" + name)
+            let candidate = (try? FileManager.default.contentsOfDirectory(at: appURL, includingPropertiesForKeys: nil))?.first { $0.pathExtension == "app" } ?? appURL
+            NSWorkspace.shared.open([m.url], withApplicationAt: candidate.pathExtension == "app" ? candidate : appURL, configuration: NSWorkspace.OpenConfiguration())
+        } else { NSWorkspace.shared.activateFileViewerSelecting([m.url]) }
+    }
 
     func deselect() { selected = nil; player.close() }
 
@@ -178,6 +206,10 @@ final class AppModel {
                     exports.preset = preset
                     if ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_LUT"] != nil { exports.useLUT = true }
                     for _ in 0..<(Int(ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_N"] ?? "") ?? 1) { addExport(c) }
+                }
+                if let n = ProcessInfo.processInfo.environment["KYNEDIT_EXCHANGE"], let nle = NLE(rawValue: n) { // essai d'échange
+                    if let d = ProcessInfo.processInfo.environment["KYNEDIT_OUT"] { exports.outputDir = d }
+                    sendToNLE(nle)
                 }
                 if ProcessInfo.processInfo.environment["KYNEDIT_PLAY"] != nil { // essai : marqueur, entrée/sortie, sous-clip, lecture ×2
                     player.markIn = 0.5; player.markOut = 1.5; player.addSubclip(); player.seek(1); player.addMarker(); player.faster(); player.faster()

@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "exchange.created": "Fichier créé : %@", "exchange.open": "OUVRIR DANS %@", "exchange.empty": "Aucun clip vidéo à envoyer.", "exchange.hint": "Envoie les clips sélectionnés (sous-clips, marqueurs, mots-clés, notes).",
         "raw.badge": "RAW", "export.raw": "Format RAW : l'export demande le SDK du fabricant, non installé.", "player.raw": "Format RAW : lecture indisponible sans le SDK du fabricant.",
         "export.subclip.one": "Exporte le sous-clip",
         "export.lut": "Avec le LUT « %@ »", "action.queue.n": "AJOUTER %d CLIPS À LA FILE", "export.multi": "%d clips sélectionnés",
@@ -30,6 +31,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "exchange.created": "File created: %@", "exchange.open": "OPEN IN %@", "exchange.empty": "No video clip to send.", "exchange.hint": "Sends the selected clips (subclips, markers, keywords, notes).",
         "raw.badge": "RAW", "export.raw": "RAW format: export needs the manufacturer's SDK, which is not installed.", "player.raw": "RAW format: playback is unavailable without the manufacturer's SDK.",
         "export.subclip.one": "Exports the subclip",
         "export.lut": "With LUT “%@”", "action.queue.n": "ADD %d CLIPS TO QUEUE", "export.multi": "%d clips selected",
@@ -57,6 +59,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "exchange.created": "Archivo creado: %@", "exchange.open": "ABRIR EN %@", "exchange.empty": "Ningún clip de vídeo para enviar.", "exchange.hint": "Envía los clips seleccionados (subclips, marcadores, palabras clave, notas).",
         "raw.badge": "RAW", "export.raw": "Formato RAW: la exportación requiere el SDK del fabricante, no instalado.", "player.raw": "Formato RAW: reproducción no disponible sin el SDK del fabricante.",
         "export.subclip.one": "Exporta el subclip",
         "export.lut": "Con el LUT «%@»", "action.queue.n": "AÑADIR %d CLIPS A LA COLA", "export.multi": "%d clips seleccionados",
@@ -84,6 +87,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "exchange.created": "File creato: %@", "exchange.open": "APRI IN %@", "exchange.empty": "Nessun clip video da inviare.", "exchange.hint": "Invia i clip selezionati (sottoclip, marcatori, parole chiave, note).",
         "raw.badge": "RAW", "export.raw": "Formato RAW: l'esportazione richiede l'SDK del produttore, non installato.", "player.raw": "Formato RAW: riproduzione non disponibile senza l'SDK del produttore.",
         "export.subclip.one": "Esporta il sottoclip",
         "export.lut": "Con il LUT «%@»", "action.queue.n": "AGGIUNGI %d CLIP ALLA CODA", "export.multi": "%d clip selezionati",

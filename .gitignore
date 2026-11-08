@@ -4,3 +4,4 @@ PASSATION_*.md
 *.log
 .DS_Store
 vendor/
+Sources/SDKs/

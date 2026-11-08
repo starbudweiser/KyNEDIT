@@ -102,3 +102,11 @@ AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, An
 **Canon CRM** : le « Canon RAW Plugin for Final Cut Pro » (RPFM 3.0.11) s'installe dans `/Library/Application Support/ProApps/PlugIns/VendorSpecific` : c'est un module des applications Apple Pro (Final Cut, Motion), pas une extension système ; AVFoundation, donc kYNEDIT, ne verrait pas les `.crm` après son installation. Il embarque le CrmSdk privé de Canon, dont l'usage hors module n'est pas autorisé. Voie à suivre : demander le CRMSDK (compte Canon Developer Community, « SDK | API | Downloads »), sans audio.
 
 **Décision du 2026-11-08 : le support Canon RAW n'est pas intégré pour l'instant.**
+
+## 9. Échanges vers les logiciels de montage (étape 8)
+
+`Exchange.swift` : clips sélectionnés (ou clip ouvert) avec leurs sous-clips, marqueurs, mots-clés, étoiles, étiquette (Validé → favori, Rejeté → rejeté) et commentaire.
+- **Final Cut Pro et DaVinci Resolve** : FCPXML 1.11 (un événement avec les clips entiers, plus un projet qui enchaîne les sous-clips ou les clips entiers). Validé contre la DTD FCPXML 1.11 fournie par Final Cut Pro 12 (`xmllint --dtdvalid`).
+- **Premiere Pro** : XML « xmeml » v4 (séquence, pistes vidéo et audio, marqueurs), vérifié bien formé.
+- Boutons RESOLVE / FINAL CUT PRO / PREMIERE PRO dans le lecteur : écrivent le fichier dans le dossier de sortie, puis « OUVRIR DANS … » (action explicite).
+- **Reste à faire** : essais d'import réels dans les trois logiciels.
