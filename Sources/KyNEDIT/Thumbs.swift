@@ -25,7 +25,7 @@ final class ThumbService: @unchecked Sendable {
     private let catalog: Catalog
     private let memory = NSCache<NSString, NSData>()
     private let infoMemory = NSCache<NSString, InfoBox>()
-    private let limiter = AsyncLimiter(max(2, ProcessInfo.processInfo.activeProcessorCount / 2))
+    private let limiter = AsyncLimiter(Scheduler.thumbSlots)
     private let dir: URL
     static let maxSide = 480
 

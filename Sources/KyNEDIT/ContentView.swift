@@ -27,7 +27,9 @@ struct ContentView: View {
             }
             .padding(.horizontal, 12).frame(height: 40).background(Socle.surface)
             Divider().overlay(Socle.border)
-            HStack(spacing: 0) {
+            if tab == .performance { PerformanceView() }
+            else if tab == .exports { Text(L("exports.empty")).foregroundColor(Socle.subtle).frame(maxWidth: .infinity, maxHeight: .infinity).background(Socle.bg) }
+            else { HStack(spacing: 0) {
                 Sidebar(model: model).frame(width: 200)
                 Divider().overlay(Socle.border)
                 VStack(spacing: 0) {
@@ -46,7 +48,7 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity).background(Socle.bg)
-            }
+            } }
         }
         .background(Socle.bg)
         .onAppear { model.installKeyMonitor() }
@@ -104,7 +106,7 @@ struct ClipList: View {
         VStack(spacing: 0) {
             HStack {
                 Text(model.root?.lastPathComponent ?? "").font(.system(size: 12, weight: .semibold)).foregroundColor(Socle.textStrong)
-                Text(model.scanning ? L("scan.progress", model.scanned) : L("scan.done", model.clips.count))
+                Text(model.scanning ? L(model.scanned == 1 ? "scan.progress.one" : "scan.progress", model.scanned) : L(model.clips.count == 1 ? "scan.done.one" : "scan.done", model.clips.count))
                     .foregroundColor(Socle.muted)
                 Spacer()
                 filters

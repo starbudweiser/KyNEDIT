@@ -91,8 +91,9 @@ enum MediaScanner {
 
     /// Parcours parallèle incrémental (`workers` dossiers traités en même temps), écriture dans le catalogue par lots.
     static func scan(root: URL, catalog: Catalog, scanID: Int,
-                     workers: Int = Int(ProcessInfo.processInfo.environment["KYNEDIT_WORKERS"] ?? "") ?? 8,
+                     workers: Int? = nil,
                      progress: @escaping @Sendable (Int) -> Void) async -> ScanStats {
+        let workers = workers ?? Int(ProcessInfo.processInfo.environment["KYNEDIT_WORKERS"] ?? "") ?? Scheduler.scanWorkers(for: root.path)
         var stats = ScanStats()
         let known = await catalog.knownDirs(root: root.path)
         var pending = [root.path]
