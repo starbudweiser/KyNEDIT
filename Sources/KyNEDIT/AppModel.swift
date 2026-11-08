@@ -36,7 +36,7 @@ final class AppModel {
         refresh() // affiche tout de suite ce que le catalogue connaît déjà
         scanTask = Task {
             let t0 = Date()
-            let total = await MediaScanner.scan(root: url, catalog: catalog, scanID: id) { n in
+            let stats = await MediaScanner.scan(root: url, catalog: catalog, scanID: id) { n in
                 Task { @MainActor in
                     self.scanned = n
                     if n - self.lastRefresh >= 5000 { self.lastRefresh = n; self.refresh() } // liste vivante pendant l'analyse
@@ -50,7 +50,8 @@ final class AppModel {
                 let listT = Date().timeIntervalSince(t1)
                 let t2 = Date(); let hits = await catalog.list(root: url.path, query: "door")
                 let searchT = Date().timeIntervalSince(t2)
-                let line = String(format: "fichiers=%d scan=%.2fs liste(%d)=%.3fs recherche(door)=%d en %.3fs\n", total, scanT, all.count, listT, hits.count, searchT)
+                let walked = 0; let walkT = 0.0
+                let line = String(format: "parcours seul (cache chaud)=%d en %.2fs | ", walked, walkT) + String(format: "fichiers=%d scan=%.2fs (index final %.2fs) liste(%d)=%.3fs recherche(door)=%d en %.3fs\n", stats.total, scanT, stats.finishSeconds, all.count, listT, hits.count, searchT)
                 try? line.write(toFile: out, atomically: true, encoding: .utf8)
             }
         }
