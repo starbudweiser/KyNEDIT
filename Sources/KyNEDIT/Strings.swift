@@ -1,0 +1,73 @@
+// Mêmes clés dans les 4 langues (français rédigé en premier).
+enum Strings {
+    static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
+
+    static let fr: [String: String] = [
+        "app.tagline": "Explorez, marquez, exportez vos médias.",
+        "tab.explorer": "Explorateur", "tab.exports": "Exports", "tab.performance": "Performances",
+        "search.placeholder": "Rechercher un clip, une étiquette, une caméra…",
+        "sidebar.volumes": "Volumes", "sidebar.favorites": "Favoris", "sidebar.tags": "Étiquettes",
+        "empty.title": "Ouvrez un dossier pour commencer.",
+        "empty.note": "Aucun fichier d'origine n'est modifié.",
+        "action.open": "OUVRIR UN DOSSIER",
+        "about.menu": "À propos de kYNEDIT",
+        "about.version": "Version %@ (%@)",
+        "about.tagline": "Explorateur de médias et transcodeur pour monteurs.",
+        "about.authors": "Starbudweiser & Claude Code (Anthropic)",
+        "about.license": "Licence MIT. © 2026 Starbudweiser.",
+        "about.disclaimer": "Inspiré de Kyno et d'EditReady, sans lien avec leurs éditeurs.",
+        "about.credit": "Réalisé avec Claude Code.",
+        "menu.quit": "Quitter kYNEDIT",
+    ]
+    static let en: [String: String] = [
+        "app.tagline": "Browse, tag and export your media.",
+        "tab.explorer": "Explorer", "tab.exports": "Exports", "tab.performance": "Performance",
+        "search.placeholder": "Search a clip, tag or camera…",
+        "sidebar.volumes": "Volumes", "sidebar.favorites": "Favorites", "sidebar.tags": "Tags",
+        "empty.title": "Open a folder to get started.",
+        "empty.note": "Your original files are never modified.",
+        "action.open": "OPEN A FOLDER",
+        "about.menu": "About kYNEDIT",
+        "about.version": "Version %@ (%@)",
+        "about.tagline": "Media browser and transcoder for editors.",
+        "about.authors": "Starbudweiser & Claude Code (Anthropic)",
+        "about.license": "MIT License. © 2026 Starbudweiser.",
+        "about.disclaimer": "Inspired by Kyno and EditReady, not affiliated with their publishers.",
+        "about.credit": "Built with Claude Code.",
+        "menu.quit": "Quit kYNEDIT",
+    ]
+    static let es: [String: String] = [
+        "app.tagline": "Explore, etiquete y exporte sus medios.",
+        "tab.explorer": "Explorador", "tab.exports": "Exportaciones", "tab.performance": "Rendimiento",
+        "search.placeholder": "Buscar un clip, una etiqueta, una cámara…",
+        "sidebar.volumes": "Volúmenes", "sidebar.favorites": "Favoritos", "sidebar.tags": "Etiquetas",
+        "empty.title": "Abra una carpeta para empezar.",
+        "empty.note": "Ningún archivo original se modifica.",
+        "action.open": "ABRIR UNA CARPETA",
+        "about.menu": "Acerca de kYNEDIT",
+        "about.version": "Versión %@ (%@)",
+        "about.tagline": "Explorador de medios y transcodificador para montadores.",
+        "about.authors": "Starbudweiser & Claude Code (Anthropic)",
+        "about.license": "Licencia MIT. © 2026 Starbudweiser.",
+        "about.disclaimer": "Inspirado en Kyno y EditReady, sin relación con sus editores.",
+        "about.credit": "Creado con Claude Code.",
+        "menu.quit": "Salir de kYNEDIT",
+    ]
+    static let it: [String: String] = [
+        "app.tagline": "Esplora, etichetta ed esporta i tuoi media.",
+        "tab.explorer": "Esplora", "tab.exports": "Esportazioni", "tab.performance": "Prestazioni",
+        "search.placeholder": "Cerca un clip, un'etichetta, una camera…",
+        "sidebar.volumes": "Volumi", "sidebar.favorites": "Preferiti", "sidebar.tags": "Etichette",
+        "empty.title": "Apri una cartella per iniziare.",
+        "empty.note": "Nessun file originale viene modificato.",
+        "action.open": "APRI UNA CARTELLA",
+        "about.menu": "Informazioni su kYNEDIT",
+        "about.version": "Versione %@ (%@)",
+        "about.tagline": "Browser di media e transcodificatore per montatori.",
+        "about.authors": "Starbudweiser & Claude Code (Anthropic)",
+        "about.license": "Licenza MIT. © 2026 Starbudweiser.",
+        "about.disclaimer": "Ispirato a Kyno ed EditReady, senza legami con i loro editori.",
+        "about.credit": "Realizzato con Claude Code.",
+        "menu.quit": "Esci da kYNEDIT",
+    ]
+}

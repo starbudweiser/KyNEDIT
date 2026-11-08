@@ -1,0 +1,5 @@
+.build/
+.swiftpm/
+PASSATION_*.md
+*.log
+.DS_Store
