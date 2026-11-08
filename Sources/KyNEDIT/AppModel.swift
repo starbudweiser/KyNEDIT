@@ -35,7 +35,8 @@ final class AppModel {
         let id = scanCounter, catalog = catalog
         refresh() // affiche tout de suite ce que le catalogue connaît déjà
         scanTask = Task {
-            _ = await MediaScanner.scan(root: url, catalog: catalog, scanID: id) { n in
+            let t0 = Date()
+            let total = await MediaScanner.scan(root: url, catalog: catalog, scanID: id) { n in
                 Task { @MainActor in
                     self.scanned = n
                     if n - self.lastRefresh >= 5000 { self.lastRefresh = n; self.refresh() } // liste vivante pendant l'analyse
@@ -43,6 +44,15 @@ final class AppModel {
             }
             scanning = false
             refresh()
+            if let out = ProcessInfo.processInfo.environment["KYNEDIT_BENCH"] { // banc d'essai (essais uniquement)
+                let scanT = Date().timeIntervalSince(t0)
+                let t1 = Date(); let all = await catalog.list(root: url.path, query: "")
+                let listT = Date().timeIntervalSince(t1)
+                let t2 = Date(); let hits = await catalog.list(root: url.path, query: "door")
+                let searchT = Date().timeIntervalSince(t2)
+                let line = String(format: "fichiers=%d scan=%.2fs liste(%d)=%.3fs recherche(door)=%d en %.3fs\n", total, scanT, all.count, listT, hits.count, searchT)
+                try? line.write(toFile: out, atomically: true, encoding: .utf8)
+            }
         }
     }
 
