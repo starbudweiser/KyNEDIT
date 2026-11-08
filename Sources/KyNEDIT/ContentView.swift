@@ -13,7 +13,7 @@ struct ContentView: View {
             HStack(spacing: 12) {
                 Brand.text(Brand.name).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.textStrong)
                 ForEach(Tab.allCases, id: \.self) { t in
-                    Text(L(t.key)).font(.system(size: 12))
+                    Text(L(t.key) + (t == .exports && model.exports.pendingCount > 0 ? " (\(model.exports.pendingCount))" : "")).font(.system(size: 12))
                         .padding(.horizontal, 12).padding(.vertical, 5)
                         .background(tab == t ? Socle.control : .clear, in: RoundedRectangle(cornerRadius: 5))
                         .foregroundColor(tab == t ? Socle.textStrong : Socle.muted)
@@ -28,7 +28,7 @@ struct ContentView: View {
             .padding(.horizontal, 12).frame(height: 40).background(Socle.surface)
             Divider().overlay(Socle.border)
             if tab == .performance { PerformanceView() }
-            else if tab == .exports { Text(L("exports.empty")).foregroundColor(Socle.subtle).frame(maxWidth: .infinity, maxHeight: .infinity).background(Socle.bg) }
+            else if tab == .exports { ExportsView(queue: model.exports) }
             else { HStack(spacing: 0) {
                 Sidebar(model: model).frame(width: 200)
                 Divider().overlay(Socle.border)

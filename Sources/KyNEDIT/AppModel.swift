@@ -6,6 +6,7 @@ final class AppModel {
     let catalog = Catalog()
     let thumbs: ThumbService
     let player: PlayerModel
+    let exports = ExportQueue()
     var selected: Clip?
     var selectedInfo: MediaInfo?
     var meta: [String: ClipMeta] = [:]
@@ -66,6 +67,12 @@ final class AppModel {
         update(clip, { if !$0.tags.contains(tag) { $0.tags.append(tag); $0.tags.sort() } }, tags: true)
     }
     func removeTag(_ clip: Clip, _ t: String) { update(clip, { $0.tags.removeAll { $0 == t } }, tags: true) }
+
+    /// Ajoute un clip à la file d'export : ses sous-clips s'ils existent, sinon le clip entier (lus dans la base, pas dans le lecteur).
+    func addExport(_ clip: Clip) {
+        let catalog = catalog
+        Task { let subs = await catalog.subclips(path: clip.path); exports.add(clip: clip, subclips: subs) }
+    }
 
     func deselect() { selected = nil; player.close() }
 
@@ -149,6 +156,11 @@ final class AppModel {
                 select(c) // sélection automatique pour les essais
                 try? await Task.sleep(for: .seconds(1))
                 if let lut = ProcessInfo.processInfo.environment["KYNEDIT_LUT"] { player.applyLUT(URL(fileURLWithPath: lut)) }
+                if let p = ProcessInfo.processInfo.environment["KYNEDIT_EXPORT"], let preset = ExportPreset(rawValue: p) { // essai d'export
+                    if let d = ProcessInfo.processInfo.environment["KYNEDIT_OUT"] { exports.outputDir = d }
+                    exports.preset = preset
+                    for _ in 0..<(Int(ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_N"] ?? "") ?? 1) { addExport(c) }
+                }
                 if ProcessInfo.processInfo.environment["KYNEDIT_PLAY"] != nil { // essai : marqueur, entrée/sortie, sous-clip, lecture ×2
                     player.markIn = 0.5; player.markOut = 1.5; player.addSubclip(); player.seek(1); player.addMarker(); player.faster(); player.faster()
                 }

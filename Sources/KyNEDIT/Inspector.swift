@@ -90,6 +90,29 @@ struct InspectorPanel: View {
                             .onSubmit { model.addTag(clip, tagText); tagText = "" }
                     }
                 }
+                if clip.kind == .video {
+                    section(L("export.title")) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 4) {
+                                ForEach(ExportPreset.allCases, id: \.self) { p in
+                                    Text(p.label).font(.system(size: 11)).lineLimit(1).fixedSize()
+                                        .padding(.horizontal, 7).padding(.vertical, 4)
+                                        .background(model.exports.preset == p ? Color(hex: 0x404040) : Socle.control, in: RoundedRectangle(cornerRadius: 4))
+                                        .foregroundColor(model.exports.preset == p ? Socle.textStrong : Socle.text)
+                                        .onTapGesture { model.exports.preset = p }
+                                }
+                            }
+                            HStack {
+                                Text(URL(fileURLWithPath: model.exports.outputDir).lastPathComponent).font(.system(size: 11)).foregroundColor(Socle.muted).lineLimit(1).truncationMode(.middle)
+                                Spacer()
+                                Text(L("export.choose")).font(.system(size: 11)).foregroundColor(Socle.accentText).onTapGesture { model.exports.chooseFolder() }
+                            }
+                            let subs = model.player.clip?.path == clip.path ? model.player.subclips.count : 0 // même source que le bouton après chargement
+                            Text(subs > 0 ? L("export.subclips", subs) : L("export.whole")).font(.system(size: 11)).foregroundColor(Socle.subtle)
+                            button(L("action.queue"), main: true) { model.addExport(clip) }
+                        }
+                    }
+                }
                 section(L("inspector.note")) {
                     TextEditor(text: $noteText).font(.system(size: 12)).scrollContentBackground(.hidden).foregroundColor(Socle.text)
                         .padding(4).frame(height: 70).background(Socle.sunken, in: RoundedRectangle(cornerRadius: 4))
