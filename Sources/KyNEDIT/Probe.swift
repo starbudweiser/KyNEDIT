@@ -43,7 +43,7 @@ enum Prober {
             return i
         case .audio, .video:
             let asset = AVURLAsset(url: url)
-            guard let duration = try? await asset.load(.duration), duration.isNumeric else { return nil }
+            guard let duration = try? await asset.load(.duration), duration.isNumeric else { return await FFmpegTool.probe(clip.path) }
             var info = MediaInfo(duration: duration.seconds)
             if clip.kind == .video, let track = try? await asset.loadTracks(withMediaType: .video).first,
                let (size, fps, transform, descs) = try? await track.load(.naturalSize, .nominalFrameRate, .preferredTransform, .formatDescriptions) {

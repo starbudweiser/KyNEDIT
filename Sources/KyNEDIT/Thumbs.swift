@@ -83,7 +83,13 @@ final class ThumbService: @unchecked Sendable {
         await limiter.acquire()
         defer { Task { await limiter.release() } }
         if Task.isCancelled { return Loaded(jpeg: nil, info: info) }
-        guard let cg = await generate(clip, info: info), let data = Self.jpeg(cg) else { return Loaded(jpeg: nil, info: info) }
+        var data: Data?
+        if let cg = await generate(clip, info: info) { data = Self.jpeg(cg) }
+        // repli ffmpeg quand AVFoundation ne sait pas décoder le format
+        if data == nil, clip.kind == .video {
+            data = await FFmpegTool.thumbnail(clip.path, time: (info?.duration ?? 0) * 0.1, side: Self.maxSide)
+        }
+        guard let data else { return Loaded(jpeg: nil, info: info) }
         try? data.write(to: file, options: .atomic)
         memory.setObject(data as NSData, forKey: k as NSString, cost: data.count)
         return Loaded(jpeg: data, info: info)

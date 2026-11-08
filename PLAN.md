@@ -79,3 +79,8 @@ Critères d'acceptation v1 : ouverture d'un dossier de 10 000 clips < 2 s (index
 - SDK RAW (licences RED / Blackmagic / ARRI) : à valider avant l'étape 7 ; sinon export via leurs outils en ligne de commande.
 - Encodeur ProRes matériel absent sur Mac de base : repli logiciel signalé clairement dans l'interface.
 - Droits d'accès disque (volumes externes, réseau) : demander l'accès complet au disque une seule fois, expliqué à l'écran.
+
+## 7. Repli ffmpeg (décision du 2026-11-08)
+
+AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, Animation/RLE) ni MXF/MKV/AVI. `FFmpegTool` prend le relais pour la sonde (ffprobe) et la vignette (ffmpeg), seulement quand AVFoundation échoue. Il cherche d'abord un exécutable embarqué (`Resources/bin`), puis Homebrew.
+**À faire avant toute diffusion :** le ffmpeg Homebrew est GPL (x264/x265) et ne doit pas être embarqué tel quel ; compiler un ffmpeg LGPL minimal (décodeurs seuls, sans x264/x265), le signer et le placer dans `Resources/bin`.
