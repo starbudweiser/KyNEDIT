@@ -18,6 +18,9 @@ struct KnownDirs: Sendable {
     var children: [String: [String]] = [:]
 }
 
+struct Marker: Identifiable, Sendable, Hashable { let id: Int64; var time: Double; var label: String }
+struct Subclip: Identifiable, Sendable, Hashable { let id: Int64; var tin: Double; var tout: Double; var name: String }
+
 struct DirEntry: Sendable {
     let path: String
     let mtime: Double
@@ -52,6 +55,10 @@ actor Catalog {
             "CREATE INDEX IF NOT EXISTS files_folder ON files(folder)",
             "CREATE TABLE IF NOT EXISTS dirs(path TEXT PRIMARY KEY, parent TEXT NOT NULL, mtime REAL NOT NULL, count INTEGER NOT NULL, seen INTEGER NOT NULL)",
             "CREATE INDEX IF NOT EXISTS dirs_parent ON dirs(parent)",
+            "CREATE TABLE IF NOT EXISTS markers(id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, time REAL NOT NULL, label TEXT NOT NULL DEFAULT '')",
+            "CREATE INDEX IF NOT EXISTS markers_path ON markers(path)",
+            "CREATE TABLE IF NOT EXISTS subclips(id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, tin REAL NOT NULL, tout REAL NOT NULL, name TEXT NOT NULL DEFAULT '')",
+            "CREATE INDEX IF NOT EXISTS subclips_path ON subclips(path)",
             "CREATE TABLE IF NOT EXISTS probe(path TEXT PRIMARY KEY, mtime REAL NOT NULL, duration REAL, width INTEGER, height INTEGER, fps REAL, codec TEXT)",
             "CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, content='files', content_rowid='rowid', tokenize='unicode61')",
         ] { sqlite3_exec(handle, sql, nil, nil, nil) }
@@ -151,6 +158,42 @@ actor Catalog {
         sqlite3_bind_double(st, 6, i.fps); sqlite3_bind_text(st, 7, i.codec, -1, transient)
         sqlite3_step(st); sqlite3_finalize(st)
     }
+
+    func markers(path: String) -> [Marker] {
+        var st: OpaquePointer?; var out: [Marker] = []
+        sqlite3_prepare_v2(db, "SELECT id,time,label FROM markers WHERE path=? ORDER BY time", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient)
+        while sqlite3_step(st) == SQLITE_ROW { out.append(Marker(id: sqlite3_column_int64(st, 0), time: sqlite3_column_double(st, 1), label: String(cString: sqlite3_column_text(st, 2)))) }
+        sqlite3_finalize(st); return out
+    }
+
+    func addMarker(path: String, time: Double, label: String) -> Marker {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT INTO markers(path,time,label) VALUES(?,?,?)", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_double(st, 2, time); sqlite3_bind_text(st, 3, label, -1, transient)
+        sqlite3_step(st); sqlite3_finalize(st)
+        return Marker(id: sqlite3_last_insert_rowid(db), time: time, label: label)
+    }
+
+    func deleteMarker(id: Int64) { sqlite3_exec(db, "DELETE FROM markers WHERE id=\(id)", nil, nil, nil) }
+
+    func subclips(path: String) -> [Subclip] {
+        var st: OpaquePointer?; var out: [Subclip] = []
+        sqlite3_prepare_v2(db, "SELECT id,tin,tout,name FROM subclips WHERE path=? ORDER BY tin", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient)
+        while sqlite3_step(st) == SQLITE_ROW { out.append(Subclip(id: sqlite3_column_int64(st, 0), tin: sqlite3_column_double(st, 1), tout: sqlite3_column_double(st, 2), name: String(cString: sqlite3_column_text(st, 3)))) }
+        sqlite3_finalize(st); return out
+    }
+
+    func addSubclip(path: String, tin: Double, tout: Double, name: String) -> Subclip {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT INTO subclips(path,tin,tout,name) VALUES(?,?,?,?)", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_double(st, 2, tin); sqlite3_bind_double(st, 3, tout); sqlite3_bind_text(st, 4, name, -1, transient)
+        sqlite3_step(st); sqlite3_finalize(st)
+        return Subclip(id: sqlite3_last_insert_rowid(db), tin: tin, tout: tout, name: name)
+    }
+
+    func deleteSubclip(id: Int64) { sqlite3_exec(db, "DELETE FROM subclips WHERE id=\(id)", nil, nil, nil) }
 
     /// Fichiers sous un dossier (récursif), filtrés par recherche plein texte (préfixes) si `query` n'est pas vide.
     func list(root: String, query: String, limit: Int = 50_000) -> [Clip] {

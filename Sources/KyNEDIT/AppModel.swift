@@ -5,6 +5,8 @@ import AppKit
 final class AppModel {
     let catalog = Catalog()
     let thumbs: ThumbService
+    let player: PlayerModel
+    var selected: Clip?
     var gridMode = true
     var root: URL?
     var clips: [Clip] = []
@@ -17,7 +19,14 @@ final class AppModel {
     private var listTask: Task<Void, Never>?
     private var scanCounter = Int(Date().timeIntervalSince1970)
 
-    init() { thumbs = ThumbService(catalog: catalog); reloadVolumes() }
+    init() { thumbs = ThumbService(catalog: catalog); player = PlayerModel(catalog: catalog); reloadVolumes() }
+
+    func select(_ clip: Clip) {
+        selected = clip
+        Task { let info = await thumbs.load(clip).info; await player.open(clip, info: info) }
+    }
+
+    func deselect() { selected = nil; player.close() }
 
     func reloadVolumes() {
         volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey],
@@ -93,6 +102,14 @@ final class AppModel {
             if Task.isCancelled { return }
             let result = await catalog.list(root: path, query: q)
             if !Task.isCancelled { clips = result }
+            if selected == nil, let name = ProcessInfo.processInfo.environment["KYNEDIT_SELECT"], let c = result.first(where: { $0.name.contains(name) }) {
+                select(c) // sélection automatique pour les essais
+                try? await Task.sleep(for: .seconds(1))
+                if let lut = ProcessInfo.processInfo.environment["KYNEDIT_LUT"] { player.applyLUT(URL(fileURLWithPath: lut)) }
+                if ProcessInfo.processInfo.environment["KYNEDIT_PLAY"] != nil { // essai : marqueur, entrée/sortie, sous-clip, lecture ×2
+                    player.markIn = 0.5; player.markOut = 1.5; player.addSubclip(); player.seek(1); player.addMarker(); player.faster(); player.faster()
+                }
+            }
         }
     }
 }

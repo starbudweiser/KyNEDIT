@@ -30,8 +30,14 @@ struct ContentView: View {
             HStack(spacing: 0) {
                 Sidebar(model: model).frame(width: 200)
                 Divider().overlay(Socle.border)
-                Group {
-                    if model.root == nil { EmptyState(model: model) } else { ClipList(model: model) }
+                VStack(spacing: 0) {
+                    Group {
+                        if model.root == nil { EmptyState(model: model) } else { ClipList(model: model) }
+                    }
+                    if model.selected != nil {
+                        Divider().overlay(Socle.border)
+                        PlayerPanel(model: model)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity).background(Socle.bg)
             }
@@ -45,7 +51,7 @@ struct ContentView: View {
 
 func button(_ title: String, main: Bool = false, action: @escaping () -> Void) -> some View {
     Button(action: action) {
-        Text(title).font(.system(size: 12, weight: .semibold)).tracking(0.5)
+        Text(title).font(.system(size: 12, weight: .semibold)).tracking(0.5).lineLimit(1).fixedSize()
             .padding(.horizontal, 14).padding(.vertical, 6)
             .background(main ? Socle.action : Socle.control, in: RoundedRectangle(cornerRadius: 5))
             .foregroundColor(main ? Socle.onAction : Socle.text)

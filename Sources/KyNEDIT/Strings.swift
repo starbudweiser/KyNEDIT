@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "player.markers": "Marqueurs", "player.subclips": "Sous-clips", "player.subclip": "CRÉER SOUS-CLIP", "player.marker": "MARQUEUR", "player.lut": "LUT…", "player.nolut": "Sans LUT", "player.unsupported": "Ce format ne se lit pas dans le lecteur.", "player.subclipname": "Sous-clip %d", "player.markername": "Marqueur %d", "player.in": "Entrée", "player.out": "Sortie",
         "view.grid": "Grille", "view.list": "Liste",
         "list.name": "Nom", "list.type": "Type", "list.size": "Taille", "list.date": "Modifié", "scan.progress": "Analyse… %d fichiers", "scan.done": "%d médias", "kind.video": "Vidéo", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "Aucun média dans ce dossier.",
         "app.tagline": "Explorez, marquez, exportez vos médias.",
@@ -22,6 +23,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "player.markers": "Markers", "player.subclips": "Subclips", "player.subclip": "CREATE SUBCLIP", "player.marker": "MARKER", "player.lut": "LUT…", "player.nolut": "No LUT", "player.unsupported": "This format cannot be played in the viewer.", "player.subclipname": "Subclip %d", "player.markername": "Marker %d", "player.in": "In", "player.out": "Out",
         "view.grid": "Grid", "view.list": "List",
         "list.name": "Name", "list.type": "Type", "list.size": "Size", "list.date": "Modified", "scan.progress": "Scanning… %d files", "scan.done": "%d media files", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "No media in this folder.",
         "app.tagline": "Browse, tag and export your media.",
@@ -41,6 +43,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "player.markers": "Marcadores", "player.subclips": "Subclips", "player.subclip": "CREAR SUBCLIP", "player.marker": "MARCADOR", "player.lut": "LUT…", "player.nolut": "Sin LUT", "player.unsupported": "Este formato no se puede reproducir en el visor.", "player.subclipname": "Subclip %d", "player.markername": "Marcador %d", "player.in": "Entrada", "player.out": "Salida",
         "view.grid": "Cuadrícula", "view.list": "Lista",
         "list.name": "Nombre", "list.type": "Tipo", "list.size": "Tamaño", "list.date": "Modificado", "scan.progress": "Analizando… %d archivos", "scan.done": "%d medios", "kind.video": "Vídeo", "kind.audio": "Audio", "kind.image": "Imagen", "empty.folder": "Ningún medio en esta carpeta.",
         "app.tagline": "Explore, etiquete y exporte sus medios.",
@@ -60,6 +63,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "player.markers": "Marcatori", "player.subclips": "Sottoclip", "player.subclip": "CREA SOTTOCLIP", "player.marker": "MARCATORE", "player.lut": "LUT…", "player.nolut": "Senza LUT", "player.unsupported": "Questo formato non è riproducibile nel visore.", "player.subclipname": "Sottoclip %d", "player.markername": "Marcatore %d", "player.in": "Ingresso", "player.out": "Uscita",
         "view.grid": "Griglia", "view.list": "Elenco",
         "list.name": "Nome", "list.type": "Tipo", "list.size": "Dimensione", "list.date": "Modificato", "scan.progress": "Analisi… %d file", "scan.done": "%d media", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Immagine", "empty.folder": "Nessun media in questa cartella.",
         "app.tagline": "Esplora, etichetta ed esporta i tuoi media.",

@@ -18,7 +18,7 @@ struct ClipGrid: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170, maximum: 260), spacing: 12)], spacing: 12) {
-                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs) }
+                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs, selected: model.selected?.path == c.path).onTapGesture { model.select(c) } }
             }.padding(16)
         }
     }
@@ -27,6 +27,7 @@ struct ClipGrid: View {
 struct ClipCard: View {
     let clip: Clip
     let service: ThumbService
+    var selected = false
     @State private var loaded: Loaded?
     private var line1: String { loaded?.info.map { formatInfo($0) } ?? "" }
     private var line2: String { loaded?.info?.codec ?? "" }
@@ -56,6 +57,7 @@ struct ClipCard: View {
         }
         .background(Socle.surface, in: RoundedRectangle(cornerRadius: 6))
         .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(selected ? Color(hex: 0x0EA5E9) : .clear, lineWidth: 2))
         .task(id: clip.path) { loaded = await service.load(clip) }
     }
 }
