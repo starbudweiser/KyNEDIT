@@ -66,47 +66,61 @@ enum MediaScanner {
         return (clips, subdirs)
     }
 
-    /// Parcours seul (sans base), pour le banc d'essai.
-    static func walkOnly(root: URL, workers: Int = Int(ProcessInfo.processInfo.environment["KYNEDIT_WORKERS"] ?? "") ?? 8) async -> Int {
-        var pending = [root.path]; var total = 0
-        await withTaskGroup(of: (clips: [Clip], subdirs: [String]).self) { group in
-            var running = 0
-            while !pending.isEmpty || running > 0 {
-                while running < workers, let dir = pending.popLast() { group.addTask { readDirectory(dir) }; running += 1 }
-                guard let r = await group.next() else { break }
-                running -= 1; pending.append(contentsOf: r.subdirs); total += r.clips.count
-            }
-        }
-        return total
+    /// Résultat du traitement d'un dossier.
+    struct DirResult: Sendable { let entry: DirEntry; let subdirs: [String]; let unchanged: Bool }
+
+    /// Date de modification d'un dossier (stat) ; nil s'il est illisible.
+    static func dirMTime(_ path: String) -> Double? {
+        var st = stat()
+        guard stat(path, &st) == 0 else { return nil }
+        return Double(st.st_mtimespec.tv_sec) + Double(st.st_mtimespec.tv_nsec) / 1e9
     }
 
-    /// Parcours parallèle (`workers` dossiers lus en même temps), écriture dans le catalogue par lots.
-    static func scan(root: URL, catalog: Catalog, scanID: Int, workers: Int = Int(ProcessInfo.processInfo.environment["KYNEDIT_WORKERS"] ?? "") ?? 8,
+    /// Un dossier dont la date n'a pas changé garde ses fichiers : on ne le relit pas, ses sous-dossiers viennent du catalogue.
+    static func process(_ dir: String, known: KnownDirs) -> DirResult? {
+        guard let mtime = dirMTime(dir) else { return nil }
+        if let k = known.info[dir], k.mtime == mtime {
+            return DirResult(entry: DirEntry(path: dir, mtime: mtime, count: k.count, clips: nil),
+                             subdirs: known.children[dir] ?? [], unchanged: true)
+        }
+        let r = readDirectory(dir)
+        return DirResult(entry: DirEntry(path: dir, mtime: mtime, count: r.clips.count, clips: r.clips), subdirs: r.subdirs, unchanged: false)
+    }
+
+    /// Parcours parallèle incrémental (`workers` dossiers traités en même temps), écriture dans le catalogue par lots.
+    static func scan(root: URL, catalog: Catalog, scanID: Int,
+                     workers: Int = Int(ProcessInfo.processInfo.environment["KYNEDIT_WORKERS"] ?? "") ?? 8,
                      progress: @escaping @Sendable (Int) -> Void) async -> ScanStats {
         var stats = ScanStats()
+        let known = await catalog.knownDirs(root: root.path)
         var pending = [root.path]
-        var batch: [Clip] = []
-        await withTaskGroup(of: (clips: [Clip], subdirs: [String]).self) { group in
+        var batch: [DirEntry] = []
+        var batchClips = 0, counted = 0, changed = false
+        await withTaskGroup(of: DirResult?.self) { group in
             var running = 0
             while !pending.isEmpty || running > 0 {
                 while running < workers, let dir = pending.popLast() {
-                    group.addTask { readDirectory(dir) }
+                    group.addTask { process(dir, known: known) }
                     running += 1
                 }
-                guard let result = await group.next() else { break }
+                guard let next = await group.next() else { break }
                 running -= 1
-                pending.append(contentsOf: result.subdirs)
-                batch.append(contentsOf: result.clips)
-                if batch.count >= 2000 {
-                    await catalog.upsert(batch, scanID: scanID); stats.total += batch.count; batch.removeAll(keepingCapacity: true)
-                    progress(stats.total)
+                if let r = next {
+                    pending.append(contentsOf: r.subdirs)
+                    batch.append(r.entry); batchClips += r.entry.clips?.count ?? 0
+                    counted += r.entry.count
+                    if !r.unchanged { changed = true }
+                }
+                if batch.count >= 2000 || batchClips >= 2000 {
+                    await catalog.commit(batch, scanID: scanID); batch.removeAll(keepingCapacity: true); batchClips = 0
+                    progress(counted)
                 }
                 if Task.isCancelled { group.cancelAll(); pending.removeAll() }
             }
         }
-        if !batch.isEmpty { await catalog.upsert(batch, scanID: scanID); stats.total += batch.count; progress(stats.total) }
+        if !batch.isEmpty { await catalog.commit(batch, scanID: scanID); progress(counted) }
         if !Task.isCancelled {
-            let t = Date(); await catalog.finishScan(root: root.path, scanID: scanID)
+            let t = Date(); stats.total = await catalog.finishScan(root: root.path, scanID: scanID, changed: changed)
             stats.finishSeconds = Date().timeIntervalSince(t)
         }
         return stats

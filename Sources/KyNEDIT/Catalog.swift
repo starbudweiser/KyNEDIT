@@ -13,6 +13,18 @@ struct Clip: Identifiable, Hashable, Sendable {
     let kind: MediaKind
 }
 
+struct KnownDirs: Sendable {
+    var info: [String: (mtime: Double, count: Int)] = [:]
+    var children: [String: [String]] = [:]
+}
+
+struct DirEntry: Sendable {
+    let path: String
+    let mtime: Double
+    let count: Int
+    let clips: [Clip]?
+}
+
 private let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
 /// Catalogue SQLite (WAL) + index plein texte FTS5. Isolé dans un acteur : une seule connexion, accès sérialisé.
@@ -38,45 +50,85 @@ actor Catalog {
               size INTEGER NOT NULL, mtime REAL NOT NULL, kind INTEGER NOT NULL, seen INTEGER NOT NULL DEFAULT 0)
             """,
             "CREATE INDEX IF NOT EXISTS files_folder ON files(folder)",
+            "CREATE TABLE IF NOT EXISTS dirs(path TEXT PRIMARY KEY, parent TEXT NOT NULL, mtime REAL NOT NULL, count INTEGER NOT NULL, seen INTEGER NOT NULL)",
+            "CREATE INDEX IF NOT EXISTS dirs_parent ON dirs(parent)",
             "CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, content='files', content_rowid='rowid', tokenize='unicode61')",
         ] { sqlite3_exec(handle, sql, nil, nil, nil) }
     }
 
 
-    /// Insère ou met à jour un lot de fichiers dans une seule transaction.
-    func upsert(_ clips: [Clip], scanID: Int) {
-        sqlite3_exec(db, "BEGIN", nil, nil, nil)
+    private static func likePattern(_ root: String) -> String {
+        root.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_") + "/%"
+    }
+
+    /// Dossiers connus sous `root` : date, nombre de médias et enfants, pour ignorer ceux qui n'ont pas changé.
+    func knownDirs(root: String) -> KnownDirs {
+        var known = KnownDirs()
         var st: OpaquePointer?
-        sqlite3_prepare_v2(db, """
-            INSERT INTO files(path,name,folder,ext,size,mtime,kind,seen) VALUES(?,?,?,?,?,?,?,?)
-            ON CONFLICT(path) DO UPDATE SET size=excluded.size, mtime=excluded.mtime, seen=excluded.seen
-            """, -1, &st, nil)
-        for c in clips {
-            sqlite3_reset(st)
-            sqlite3_bind_text(st, 1, c.path, -1, transient)
-            sqlite3_bind_text(st, 2, c.name, -1, transient)
-            sqlite3_bind_text(st, 3, (c.path as NSString).deletingLastPathComponent, -1, transient)
-            sqlite3_bind_text(st, 4, c.ext, -1, transient)
-            sqlite3_bind_int64(st, 5, c.size)
-            sqlite3_bind_double(st, 6, c.mtime)
-            sqlite3_bind_int(st, 7, Int32(c.kind.rawValue))
-            sqlite3_bind_int(st, 8, Int32(scanID))
-            sqlite3_step(st)
+        sqlite3_prepare_v2(db, "SELECT path,parent,mtime,count FROM dirs WHERE path=? OR path LIKE ? ESCAPE '\\'", -1, &st, nil)
+        sqlite3_bind_text(st, 1, root, -1, transient)
+        sqlite3_bind_text(st, 2, Catalog.likePattern(root), -1, transient)
+        while sqlite3_step(st) == SQLITE_ROW {
+            let path = String(cString: sqlite3_column_text(st, 0)), parent = String(cString: sqlite3_column_text(st, 1))
+            known.info[path] = (sqlite3_column_double(st, 2), Int(sqlite3_column_int(st, 3)))
+            known.children[parent, default: []].append(path)
         }
         sqlite3_finalize(st)
+        return known
+    }
+
+    /// Enregistre un lot de dossiers visités. Un dossier relu (`clips` non nil) voit ses fichiers remplacés ;
+    /// un dossier inchangé (`clips` nil) est seulement marqué comme revu.
+    func commit(_ entries: [DirEntry], scanID: Int) {
+        sqlite3_exec(db, "BEGIN", nil, nil, nil)
+        var dirSt: OpaquePointer?, delSt: OpaquePointer?, fileSt: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT OR REPLACE INTO dirs(path,parent,mtime,count,seen) VALUES(?,?,?,?,?)", -1, &dirSt, nil)
+        sqlite3_prepare_v2(db, "DELETE FROM files WHERE folder=?", -1, &delSt, nil)
+        sqlite3_prepare_v2(db, "INSERT OR REPLACE INTO files(path,name,folder,ext,size,mtime,kind,seen) VALUES(?,?,?,?,?,?,?,0)", -1, &fileSt, nil)
+        for e in entries {
+            sqlite3_reset(dirSt)
+            sqlite3_bind_text(dirSt, 1, e.path, -1, transient)
+            sqlite3_bind_text(dirSt, 2, (e.path as NSString).deletingLastPathComponent, -1, transient)
+            sqlite3_bind_double(dirSt, 3, e.mtime)
+            sqlite3_bind_int(dirSt, 4, Int32(e.count))
+            sqlite3_bind_int(dirSt, 5, Int32(scanID))
+            sqlite3_step(dirSt)
+            guard let clips = e.clips else { continue }
+            sqlite3_reset(delSt); sqlite3_bind_text(delSt, 1, e.path, -1, transient); sqlite3_step(delSt)
+            for c in clips {
+                sqlite3_reset(fileSt)
+                sqlite3_bind_text(fileSt, 1, c.path, -1, transient)
+                sqlite3_bind_text(fileSt, 2, c.name, -1, transient)
+                sqlite3_bind_text(fileSt, 3, e.path, -1, transient)
+                sqlite3_bind_text(fileSt, 4, c.ext, -1, transient)
+                sqlite3_bind_int64(fileSt, 5, c.size)
+                sqlite3_bind_double(fileSt, 6, c.mtime)
+                sqlite3_bind_int(fileSt, 7, Int32(c.kind.rawValue))
+                sqlite3_step(fileSt)
+            }
+        }
+        sqlite3_finalize(dirSt); sqlite3_finalize(delSt); sqlite3_finalize(fileSt)
         sqlite3_exec(db, "COMMIT", nil, nil, nil)
     }
 
-    /// Fin d'analyse : retire les fichiers du dossier qui n'ont pas été revus (supprimés ou déplacés) et réindexe la recherche.
-    func finishScan(root: String, scanID: Int) {
+    /// Fin d'analyse : retire les dossiers non revus (supprimés ou déplacés) et leurs fichiers, réindexe la recherche
+    /// (seulement si quelque chose a changé). Retourne le nombre de médias sous `root`.
+    func finishScan(root: String, scanID: Int, changed: Bool) -> Int {
+        let like = Catalog.likePattern(root)
         var st: OpaquePointer?
-        sqlite3_prepare_v2(db, "DELETE FROM files WHERE (folder=? OR folder LIKE ? ESCAPE '\\') AND seen<>?", -1, &st, nil)
-        sqlite3_bind_text(st, 1, root, -1, transient)
-        let escaped = root.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_")
-        sqlite3_bind_text(st, 2, escaped + "/%", -1, transient)
-        sqlite3_bind_int(st, 3, Int32(scanID))
+        sqlite3_prepare_v2(db, "DELETE FROM files WHERE (folder=?1 OR folder LIKE ?2 ESCAPE '\\') AND folder NOT IN (SELECT path FROM dirs WHERE seen=?3)", -1, &st, nil)
+        sqlite3_bind_text(st, 1, root, -1, transient); sqlite3_bind_text(st, 2, like, -1, transient); sqlite3_bind_int(st, 3, Int32(scanID))
+        sqlite3_step(st); let removed = sqlite3_changes(db); sqlite3_finalize(st)
+        sqlite3_prepare_v2(db, "DELETE FROM dirs WHERE (path=?1 OR path LIKE ?2 ESCAPE '\\') AND seen<>?3", -1, &st, nil)
+        sqlite3_bind_text(st, 1, root, -1, transient); sqlite3_bind_text(st, 2, like, -1, transient); sqlite3_bind_int(st, 3, Int32(scanID))
         sqlite3_step(st); sqlite3_finalize(st)
-        sqlite3_exec(db, "INSERT INTO files_fts(files_fts) VALUES('rebuild')", nil, nil, nil)
+        if changed || removed > 0 { sqlite3_exec(db, "INSERT INTO files_fts(files_fts) VALUES('rebuild')", nil, nil, nil) }
+        sqlite3_prepare_v2(db, "SELECT COALESCE(SUM(count),0) FROM dirs WHERE path=?1 OR path LIKE ?2 ESCAPE '\\'", -1, &st, nil)
+        sqlite3_bind_text(st, 1, root, -1, transient); sqlite3_bind_text(st, 2, like, -1, transient)
+        var total = 0
+        if sqlite3_step(st) == SQLITE_ROW { total = Int(sqlite3_column_int64(st, 0)) }
+        sqlite3_finalize(st)
+        return total
     }
 
     /// Fichiers sous un dossier (récursif), filtrés par recherche plein texte (préfixes) si `query` n'est pas vide.
@@ -90,8 +142,7 @@ actor Catalog {
         var i: Int32 = 1
         if !terms.isEmpty { sqlite3_bind_text(st, i, terms.joined(separator: " "), -1, transient); i += 1 }
         sqlite3_bind_text(st, i, root, -1, transient); i += 1
-        let escaped = root.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "%", with: "\\%").replacingOccurrences(of: "_", with: "\\_")
-        sqlite3_bind_text(st, i, escaped + "/%", -1, transient); i += 1
+        sqlite3_bind_text(st, i, Catalog.likePattern(root), -1, transient); i += 1
         sqlite3_bind_int(st, i, Int32(limit))
         var out: [Clip] = []
         while sqlite3_step(st) == SQLITE_ROW {
