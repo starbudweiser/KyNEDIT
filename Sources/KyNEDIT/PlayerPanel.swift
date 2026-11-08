@@ -20,7 +20,6 @@ final class PlayerLayerView: NSView {
 
 struct PlayerPanel: View {
     let model: AppModel
-    @FocusState private var focused: Bool
     private var p: PlayerModel { model.player }
 
     var body: some View {
@@ -59,25 +58,6 @@ struct PlayerPanel: View {
             }.padding(16).frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(height: 300).background(Socle.surface)
-        .focusable().focused($focused).focusEffectDisabled()
-        .onAppear { focused = true }
-        .onKeyPress(phases: .down) { press in
-            switch press.characters.lowercased() {
-            case " ", "k": if press.characters == " " { p.togglePlay() } else { p.pause() }
-            case "l": p.faster()
-            case "j": p.reverse()
-            case "i": p.markIn = p.time
-            case "o": p.markOut = p.time
-            case "m": p.addMarker()
-            default:
-                switch press.key {
-                case .leftArrow: p.step(press.modifiers.contains(.shift) ? -10 : -1)
-                case .rightArrow: p.step(press.modifiers.contains(.shift) ? 10 : 1)
-                default: return .ignored
-                }
-            }
-            return .handled
-        }
     }
 
     private func chooseLUT() {

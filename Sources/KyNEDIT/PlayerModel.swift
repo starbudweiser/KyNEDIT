@@ -71,6 +71,27 @@ final class PlayerModel {
         return String(format: "%02d:%02d:%02d:%02d", h, m, s, fr)
     }
 
+    /// Raccourcis du lecteur. Retourne true si la touche est traitée.
+    func handleKey(chars: String, keyCode: UInt16, shift: Bool) -> Bool {
+        guard clip != nil else { return false }
+        switch keyCode {
+        case 123: step(shift ? -10 : -1); return true
+        case 124: step(shift ? 10 : 1); return true
+        default: break
+        }
+        switch chars.lowercased() {
+        case " ": togglePlay()
+        case "k": pause()
+        case "l": faster()
+        case "j": reverse()
+        case "i": markIn = time
+        case "o": markOut = time
+        case "m": addMarker()
+        default: return false
+        }
+        return true
+    }
+
     // MARK: marqueurs et sous-clips
     func addMarker() {
         guard let path = clip?.path else { return }

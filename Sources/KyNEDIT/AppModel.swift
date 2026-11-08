@@ -7,6 +7,7 @@ final class AppModel {
     let thumbs: ThumbService
     let player: PlayerModel
     var selected: Clip?
+    var focusTick = 0 // change à chaque sélection : le panneau lecteur reprend alors le clavier (sinon la recherche le garde)
     var gridMode = true
     var root: URL?
     var clips: [Clip] = []
@@ -19,10 +20,24 @@ final class AppModel {
     private var listTask: Task<Void, Never>?
     private var scanCounter = Int(Date().timeIntervalSince1970)
 
+    /// Raccourcis clavier du lecteur : actifs quand un clip est ouvert et qu'aucun champ de texte n'a le clavier.
+    func installKeyMonitor() {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
+            let chars = e.charactersIgnoringModifiers ?? "", code = e.keyCode, flags = e.modifierFlags
+            let handled: Bool = MainActor.assumeIsolated {
+                guard let self, self.selected != nil, !flags.contains(.command) else { return false }
+                if (NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first)?.firstResponder is NSText { return false }
+                return self.player.handleKey(chars: chars, keyCode: code, shift: flags.contains(.shift))
+            }
+            return handled ? nil : e
+        }
+    }
+
     init() { thumbs = ThumbService(catalog: catalog); player = PlayerModel(catalog: catalog); reloadVolumes() }
 
     func select(_ clip: Clip) {
-        selected = clip
+        selected = clip; focusTick += 1
+        (NSApp.mainWindow ?? NSApp.windows.first)?.makeFirstResponder(nil) // la recherche lâche le clavier : les touches vont au lecteur
         Task { let info = await thumbs.load(clip).info; await player.open(clip, info: info) }
     }
 

@@ -43,6 +43,7 @@ struct ContentView: View {
             }
         }
         .background(Socle.bg)
+        .onAppear { model.installKeyMonitor() }
         .onAppear { // ouverture automatique d'un dossier pour les essais (KYNEDIT_OPEN=/chemin)
             if let p = ProcessInfo.processInfo.environment["KYNEDIT_OPEN"] { model.open(URL(fileURLWithPath: p)) }
         }
