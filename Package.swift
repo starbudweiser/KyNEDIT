@@ -5,6 +5,8 @@ let package = Package(
     name: "KyNEDIT",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "KyNEDIT", path: "Sources/KyNEDIT")
-    ]
+        .target(name: "CBRAW", path: "Sources/CBRAW", cxxSettings: [.unsafeFlags(["-std=c++17"])], linkerSettings: [.linkedFramework("CoreFoundation")]),
+        .executableTarget(name: "KyNEDIT", dependencies: ["CBRAW"], path: "Sources/KyNEDIT")
+    ],
+    cxxLanguageStandard: .cxx17
 )

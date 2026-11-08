@@ -26,7 +26,8 @@ struct PlayerPanel: View {
         HStack(spacing: 0) {
             ZStack {
                 Color.black
-                if p.playable { VideoSurface(player: p.player) }
+                if p.usesBRAW { if let img = p.brawImage { Image(decorative: img, scale: 1).resizable().aspectRatio(contentMode: .fit) } }
+                else if p.playable { VideoSurface(player: p.player) }
                 else { Text(L(p.clip?.isRaw == true ? "player.raw" : "player.unsupported")).font(.system(size: 12)).foregroundColor(Socle.subtle).multilineTextAlignment(.center).padding(16) }
             }
             .frame(width: 400, height: 225).frame(maxHeight: .infinity)

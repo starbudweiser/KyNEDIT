@@ -87,9 +87,12 @@ AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, An
 
 ## 8. Formats RAW (état au 2026-11-08)
 
-Aucun fichier BRAW, R3D ou ARRIRAW n'existe sur les disques de ce Mac, et aucun SDK de développement n'est installé (seuls des moteurs d'exécution embarqués dans DaVinci Resolve, Premiere Pro et Blackmagic RAW Player, qu'on ne peut ni lier ni redistribuer). L'appli signale donc ces fichiers (badge « RAW », message clair dans le lecteur et à l'export) sans tenter de les décoder.
-**Pour la suite :**
-- **BRAW** : SDK gratuit de Blackmagic (licence à accepter par l'utilisateur) ; l'API COM se charge au runtime depuis `BlackmagicRawAPI.framework`.
-- **R3D** : SDK RED sur demande, accord de licence.
-- **ARRIRAW** : ARRI Image SDK, licence/inscription.
-- Prévoir un protocole `RawDecoder` (sonde, image à un instant, flux d'images) branché sur la sonde, les vignettes, le lecteur et l'export.
+**BRAW : pris en charge** (SDK Blackmagic RAW 6.0, fourni par l'utilisateur).
+- Pont C++ `Sources/CBRAW` (en-tête et chargeur du SDK, licence permissive de Blackmagic en tête de fichier) ; le framework `BlackmagicRawAPI.framework` se charge à l'exécution, cherché d'abord dans `Contents/Frameworks` de l'appli, puis dans l'installation officielle.
+- Le framework (15 Mo) est placé dans `vendor/` (hors dépôt) et copié dans l'appli par `build.sh`. **À vérifier avant toute diffusion** : le contrat de licence du SDK pour la redistribution de la bibliothèque.
+- Sonde, vignette, lecteur (images décodées à 1/4, lecture suivant l'horloge) et export ProRes / H.264 / HEVC avec audio. Décodage en BGRA 8 bits : un export BRAW garde 8 bits (le décodage 16 bits est la suite logique).
+- Testé avec `sample.braw` du SDK (4608×2592, 1 image, audio stéréo 48 kHz). Lecture continue et export de longs clips non testés (aucun clip long disponible).
+
+**Chargement depuis `/Applications/Blackmagic RAW`** : bloqué pendant plusieurs minutes par la vérification de signature de macOS, avec une fenêtre « endommagé » ; la copie du framework extraite du SDK se charge en 0,3 s.
+
+**R3D, ARRIRAW, Canon CRM : en attente de leurs SDK** (RED sur demande, ARRI sur inscription, Canon). Exemples publics repérés : [RED](https://www.reddigitalcinema.com/sample-r3d-files) (ZIP de 347 Mo à 18 Go), [ARRI](https://www.arri.com/en/learn/camera-systems/camera-sample-footage-reference-image) (liens Frame.io). Prévoir un protocole `RawDecoder` pour brancher chaque format.

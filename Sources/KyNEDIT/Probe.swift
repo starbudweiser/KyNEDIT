@@ -42,6 +42,7 @@ enum Prober {
             i.height = (p[kCGImagePropertyPixelHeight] as? Int) ?? 0
             return i
         case .audio, .video:
+            if clip.ext == "braw" { return BRAWClipHandle(path: clip.path)?.mediaInfo }
             let asset = AVURLAsset(url: url)
             guard let duration = try? await asset.load(.duration), duration.isNumeric else { return await FFmpegTool.probe(clip.path) }
             var info = MediaInfo(duration: duration.seconds)

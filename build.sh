@@ -9,6 +9,8 @@ BIN="$(swift build -c release --arch arm64 --show-bin-path)/$TARGET"
 APP="$DEST/$NAME.app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/$NAME"
+# SDK Blackmagic RAW : framework embarqué (vendor/, hors dépôt) pour lire et exporter le BRAW.
+if [ -d vendor/BlackmagicRawAPI.framework ]; then mkdir -p "$APP/Contents/Frameworks"; ditto vendor/BlackmagicRawAPI.framework "$APP/Contents/Frameworks/BlackmagicRawAPI.framework"; fi
 ICON=""; for f in assets/*.icns; do [ -f "$f" ] && { cp "$f" "$APP/Contents/Resources/AppIcon.icns"; ICON="AppIcon"; }; done
 cat > "$APP/Contents/Info.plist" <<PL
 <?xml version="1.0" encoding="UTF-8"?>
