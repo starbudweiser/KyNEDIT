@@ -52,6 +52,7 @@ actor Catalog {
             "CREATE INDEX IF NOT EXISTS files_folder ON files(folder)",
             "CREATE TABLE IF NOT EXISTS dirs(path TEXT PRIMARY KEY, parent TEXT NOT NULL, mtime REAL NOT NULL, count INTEGER NOT NULL, seen INTEGER NOT NULL)",
             "CREATE INDEX IF NOT EXISTS dirs_parent ON dirs(parent)",
+            "CREATE TABLE IF NOT EXISTS probe(path TEXT PRIMARY KEY, mtime REAL NOT NULL, duration REAL, width INTEGER, height INTEGER, fps REAL, codec TEXT)",
             "CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, content='files', content_rowid='rowid', tokenize='unicode61')",
         ] { sqlite3_exec(handle, sql, nil, nil, nil) }
     }
@@ -129,6 +130,26 @@ actor Catalog {
         if sqlite3_step(st) == SQLITE_ROW { total = Int(sqlite3_column_int64(st, 0)) }
         sqlite3_finalize(st)
         return total
+    }
+
+    /// En-têtes déjà lus pour ce fichier (valables tant que sa date n'a pas changé).
+    func info(path: String, mtime: Double) -> MediaInfo? {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "SELECT duration,width,height,fps,codec FROM probe WHERE path=? AND mtime=?", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_double(st, 2, mtime)
+        defer { sqlite3_finalize(st) }
+        guard sqlite3_step(st) == SQLITE_ROW else { return nil }
+        return MediaInfo(duration: sqlite3_column_double(st, 0), width: Int(sqlite3_column_int(st, 1)), height: Int(sqlite3_column_int(st, 2)),
+                         fps: sqlite3_column_double(st, 3), codec: sqlite3_column_text(st, 4).map { String(cString: $0) } ?? "")
+    }
+
+    func saveInfo(_ i: MediaInfo, path: String, mtime: Double) {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT OR REPLACE INTO probe(path,mtime,duration,width,height,fps,codec) VALUES(?,?,?,?,?,?,?)", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_double(st, 2, mtime)
+        sqlite3_bind_double(st, 3, i.duration); sqlite3_bind_int(st, 4, Int32(i.width)); sqlite3_bind_int(st, 5, Int32(i.height))
+        sqlite3_bind_double(st, 6, i.fps); sqlite3_bind_text(st, 7, i.codec, -1, transient)
+        sqlite3_step(st); sqlite3_finalize(st)
     }
 
     /// Fichiers sous un dossier (récursif), filtrés par recherche plein texte (préfixes) si `query` n'est pas vide.

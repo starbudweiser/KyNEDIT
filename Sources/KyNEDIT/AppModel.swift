@@ -4,6 +4,8 @@ import AppKit
 @MainActor @Observable
 final class AppModel {
     let catalog = Catalog()
+    let thumbs: ThumbService
+    var gridMode = true
     var root: URL?
     var clips: [Clip] = []
     var query = "" { didSet { refresh() } }
@@ -15,7 +17,7 @@ final class AppModel {
     private var listTask: Task<Void, Never>?
     private var scanCounter = Int(Date().timeIntervalSince1970)
 
-    init() { reloadVolumes() }
+    init() { thumbs = ThumbService(catalog: catalog); reloadVolumes() }
 
     func reloadVolumes() {
         volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey],

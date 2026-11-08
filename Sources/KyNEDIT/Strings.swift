@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "view.grid": "Grille", "view.list": "Liste",
         "list.name": "Nom", "list.type": "Type", "list.size": "Taille", "list.date": "Modifié", "scan.progress": "Analyse… %d fichiers", "scan.done": "%d médias", "kind.video": "Vidéo", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "Aucun média dans ce dossier.",
         "app.tagline": "Explorez, marquez, exportez vos médias.",
         "tab.explorer": "Explorateur", "tab.exports": "Exports", "tab.performance": "Performances",
@@ -21,6 +22,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "view.grid": "Grid", "view.list": "List",
         "list.name": "Name", "list.type": "Type", "list.size": "Size", "list.date": "Modified", "scan.progress": "Scanning… %d files", "scan.done": "%d media files", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "No media in this folder.",
         "app.tagline": "Browse, tag and export your media.",
         "tab.explorer": "Explorer", "tab.exports": "Exports", "tab.performance": "Performance",
@@ -39,6 +41,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "view.grid": "Cuadrícula", "view.list": "Lista",
         "list.name": "Nombre", "list.type": "Tipo", "list.size": "Tamaño", "list.date": "Modificado", "scan.progress": "Analizando… %d archivos", "scan.done": "%d medios", "kind.video": "Vídeo", "kind.audio": "Audio", "kind.image": "Imagen", "empty.folder": "Ningún medio en esta carpeta.",
         "app.tagline": "Explore, etiquete y exporte sus medios.",
         "tab.explorer": "Explorador", "tab.exports": "Exportaciones", "tab.performance": "Rendimiento",
@@ -57,6 +60,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "view.grid": "Griglia", "view.list": "Elenco",
         "list.name": "Nome", "list.type": "Tipo", "list.size": "Dimensione", "list.date": "Modificato", "scan.progress": "Analisi… %d file", "scan.done": "%d media", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Immagine", "empty.folder": "Nessun media in questa cartella.",
         "app.tagline": "Esplora, etichetta ed esporta i tuoi media.",
         "tab.explorer": "Esplora", "tab.exports": "Esportazioni", "tab.performance": "Prestazioni",

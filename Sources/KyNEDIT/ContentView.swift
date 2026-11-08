@@ -94,8 +94,22 @@ struct ClipList: View {
                 Text(model.scanning ? L("scan.progress", model.scanned) : L("scan.done", model.clips.count))
                     .foregroundColor(Socle.muted)
                 Spacer()
+                HStack(spacing: 2) {
+                    ForEach([true, false], id: \.self) { g in
+                        Text(L(g ? "view.grid" : "view.list")).font(.system(size: 12))
+                            .padding(.horizontal, 9).padding(.vertical, 3)
+                            .background(model.gridMode == g ? Color(hex: 0x404040) : Socle.control, in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundColor(model.gridMode == g ? Socle.textStrong : Socle.text)
+                            .onTapGesture { model.gridMode = g }
+                    }
+                }
             }.padding(.horizontal, 16).padding(.vertical, 8)
             Divider().overlay(Color(hex: 0x2E2E2E))
+            if model.gridMode {
+                if model.clips.isEmpty && !model.scanning {
+                    Text(L("empty.folder")).foregroundColor(Socle.subtle).frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else { ClipGrid(model: model) }
+            } else {
             HStack(spacing: 0) {
                 col(L("list.name"), nil); col(L("list.type"), 90); col(L("list.size"), 90); col(L("list.date"), 130)
             }.padding(.horizontal, 16).padding(.vertical, 5)
@@ -117,6 +131,7 @@ struct ClipList: View {
                     .listRowSeparator(.hidden).listRowBackground(Color.clear)
                 }
                 .listStyle(.plain).scrollContentBackground(.hidden)
+            }
             }
         }
     }
