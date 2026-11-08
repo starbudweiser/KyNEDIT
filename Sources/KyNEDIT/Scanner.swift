@@ -66,6 +66,8 @@ enum MediaScanner {
         return (clips, subdirs)
     }
 
+    static let ioQueue = DispatchQueue(label: "kynedit.scan.io", qos: .userInitiated, attributes: .concurrent)
+
     /// Résultat du traitement d'un dossier.
     struct DirResult: Sendable { let entry: DirEntry; let subdirs: [String]; let unchanged: Bool }
 
@@ -100,7 +102,12 @@ enum MediaScanner {
             var running = 0
             while !pending.isEmpty || running > 0 {
                 while running < workers, let dir = pending.popLast() {
-                    group.addTask { process(dir, known: known) }
+                    group.addTask {
+                        // appels système bloquants : file GCD concurrente, pour ne pas bloquer le pool de Swift
+                        await withCheckedContinuation { (c: CheckedContinuation<DirResult?, Never>) in
+                            ioQueue.async { c.resume(returning: process(dir, known: known)) }
+                        }
+                    }
                     running += 1
                 }
                 guard let next = await group.next() else { break }
