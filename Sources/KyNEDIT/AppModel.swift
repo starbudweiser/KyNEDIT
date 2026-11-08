@@ -10,6 +10,7 @@ final class AppModel {
     var scanning = false
     var scanned = 0
     var volumes: [URL] = []
+    private var lastRefresh = 0
     private var scanTask: Task<Void, Never>?
     private var listTask: Task<Void, Never>?
     private var scanCounter = Int(Date().timeIntervalSince1970)
@@ -29,13 +30,16 @@ final class AppModel {
 
     func open(_ url: URL) {
         scanTask?.cancel()
-        root = url; clips = []; scanned = 0; scanning = true
+        root = url; clips = []; scanned = 0; lastRefresh = 0; scanning = true
         scanCounter += 1
         let id = scanCounter, catalog = catalog
         refresh() // affiche tout de suite ce que le catalogue connaît déjà
         scanTask = Task {
             _ = await MediaScanner.scan(root: url, catalog: catalog, scanID: id) { n in
-                Task { @MainActor in self.scanned = n }
+                Task { @MainActor in
+                    self.scanned = n
+                    if n - self.lastRefresh >= 5000 { self.lastRefresh = n; self.refresh() } // liste vivante pendant l'analyse
+                }
             }
             scanning = false
             refresh()

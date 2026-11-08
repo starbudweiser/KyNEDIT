@@ -113,7 +113,7 @@ struct ClipList: View {
                         Text(Date(timeIntervalSince1970: c.mtime).formatted(date: .abbreviated, time: .shortened))
                             .foregroundColor(Socle.muted).frame(width: 130, alignment: .leading)
                     }
-                    .font(.system(size: 12)).listRowInsets(EdgeInsets(top: 3, leading: 16, bottom: 3, trailing: 16))
+                    .font(.system(size: 12)).listRowInsets(EdgeInsets(top: 3, leading: 4, bottom: 3, trailing: 7))
                     .listRowSeparator(.hidden).listRowBackground(Color.clear)
                 }
                 .listStyle(.plain).scrollContentBackground(.hidden)
