@@ -13,8 +13,8 @@ let package = Package(
     targets: [
         .target(name: "CBRAW", path: "Sources/CBRAW", cxxSettings: [.unsafeFlags(["-std=c++17"])], linkerSettings: [.linkedFramework("CoreFoundation")]),
         .target(name: "CRED", path: "Sources/CRED",
-                cxxSettings: [.unsafeFlags(["-std=c++17", "-I", root + "/vendor/R3DSDK/Include"])],
-                linkerSettings: hasRed ? [.unsafeFlags([redLib]), .linkedFramework("Metal")] : []),
+                cxxSettings: [.unsafeFlags(["-std=c++17", "-fobjc-arc", "-I", root + "/vendor/R3DSDK/Include"])],
+                linkerSettings: hasRed ? [.unsafeFlags([redLib]), .linkedFramework("Metal"), .linkedFramework("Foundation")] : []),
         .executableTarget(name: "KyNEDIT", dependencies: ["CBRAW", "CRED"], path: "Sources/KyNEDIT")
     ],
     cxxLanguageStandard: .cxx17

@@ -10,6 +10,8 @@ typedef struct REDClip REDClip;
 
 /// 1 si l'appli a été compilée avec le SDK R3D, 0 sinon.
 int red_compiled(void);
+/// 1 si le décodage GPU (Metal) est utilisable sur cette machine.
+int red_gpu_available(void);
 /// Initialise le SDK (une fois). `libDir` : dossier contenant REDR3D.dylib. Retourne 0 si réussi.
 int red_init(const char* libDir);
 REDClip* red_open(const char* path);
