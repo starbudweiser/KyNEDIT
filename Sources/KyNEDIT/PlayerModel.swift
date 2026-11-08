@@ -16,7 +16,7 @@ final class PlayerModel {
     var markers: [Marker] = []
     var subclips: [Subclip] = []
     var lutName: String?
-    private var lutURL: URL?
+    private(set) var lutURL: URL?
     private var observer: Any?
     private let catalog: Catalog
 
@@ -124,7 +124,7 @@ final class PlayerModel {
     }
 
     /// Lit un fichier .cube 3D : (taille, données RGBA flottantes).
-    static func parseCube(_ url: URL) -> (size: Int, data: Data)? {
+    nonisolated static func parseCube(_ url: URL) -> (size: Int, data: Data)? {
         guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
         var size = 0; var floats: [Float] = []
         for line in text.split(whereSeparator: \.isNewline) {

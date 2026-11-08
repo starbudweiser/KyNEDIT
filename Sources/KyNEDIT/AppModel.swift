@@ -8,6 +8,7 @@ final class AppModel {
     let player: PlayerModel
     let exports = ExportQueue()
     var selected: Clip?
+    var selection: Set<String> = []
     var selectedInfo: MediaInfo?
     var meta: [String: ClipMeta] = [:]
     var ratingMin = 0 { didSet { refresh() } }
@@ -44,8 +45,20 @@ final class AppModel {
 
     init() { thumbs = ThumbService(catalog: catalog); player = PlayerModel(catalog: catalog); reloadVolumes() }
 
+    /// Clic sur une carte : simple = ce clip seul ; Cmd = ajoute ou retire ; Maj = plage depuis le clip précédemment sélectionné.
+    func click(_ clip: Clip) {
+        let flags = NSEvent.modifierFlags
+        if flags.contains(.command) {
+            if selection.contains(clip.path) { selection.remove(clip.path); if selected?.path == clip.path { selected = clips.first { selection.contains($0.path) } ?? nil; if selected == nil { deselect() } }; return }
+            selection.insert(clip.path)
+        } else if flags.contains(.shift), let a = selected, let i = clips.firstIndex(where: { $0.path == a.path }), let j = clips.firstIndex(where: { $0.path == clip.path }) {
+            for c in clips[min(i, j)...max(i, j)] { selection.insert(c.path) }
+        } else { selection = [clip.path] }
+        select(clip)
+    }
+
     func select(_ clip: Clip) {
-        selected = clip; focusTick += 1
+        selected = clip; selection.insert(clip.path); focusTick += 1
         (NSApp.mainWindow ?? NSApp.windows.first)?.makeFirstResponder(nil) // la recherche lâche le clavier : les touches vont au lecteur
         Task { let info = await thumbs.load(clip).info; selectedInfo = info; await player.open(clip, info: info) }
     }
@@ -70,9 +83,12 @@ final class AppModel {
 
     /// Ajoute un clip à la file d'export : ses sous-clips s'ils existent, sinon le clip entier (lus dans la base, pas dans le lecteur).
     func addExport(_ clip: Clip) {
-        let catalog = catalog
-        Task { let subs = await catalog.subclips(path: clip.path); exports.add(clip: clip, subclips: subs) }
+        let catalog = catalog, lut = exports.useLUT ? player.lutURL?.path : nil
+        Task { let subs = await catalog.subclips(path: clip.path); exports.add(clip: clip, subclips: subs, lutPath: lut) }
     }
+
+    /// Tous les clips vidéo sélectionnés, dans l'ordre de la liste.
+    func addSelectionToExport() { for c in clips where selection.contains(c.path) && c.kind == .video { addExport(c) } }
 
     func deselect() { selected = nil; player.close() }
 
@@ -155,10 +171,12 @@ final class AppModel {
             if selected == nil, let name = ProcessInfo.processInfo.environment["KYNEDIT_SELECT"], let c = result.first(where: { $0.name.contains(name) }) {
                 select(c) // sélection automatique pour les essais
                 try? await Task.sleep(for: .seconds(1))
+                if let n = Int(ProcessInfo.processInfo.environment["KYNEDIT_MULTI"] ?? "") { for c in result.filter({ $0.kind == .video }).prefix(n) { selection.insert(c.path) } } // essai : sélection multiple
                 if let lut = ProcessInfo.processInfo.environment["KYNEDIT_LUT"] { player.applyLUT(URL(fileURLWithPath: lut)) }
                 if let p = ProcessInfo.processInfo.environment["KYNEDIT_EXPORT"], let preset = ExportPreset(rawValue: p) { // essai d'export
                     if let d = ProcessInfo.processInfo.environment["KYNEDIT_OUT"] { exports.outputDir = d }
                     exports.preset = preset
+                    if ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_LUT"] != nil { exports.useLUT = true }
                     for _ in 0..<(Int(ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_N"] ?? "") ?? 1) { addExport(c) }
                 }
                 if ProcessInfo.processInfo.environment["KYNEDIT_PLAY"] != nil { // essai : marqueur, entrée/sortie, sous-clip, lecture ×2

@@ -11,6 +11,7 @@ struct ExportJob: Identifiable, Codable, Equatable, Sendable {
     var preset: ExportPreset
     var outputDir: String
     var suffix: String        // ajouté au nom de fichier (nom du sous-clip)
+    var lutPath: String?
     var state: State = .waiting
     var progress = 0.0
     var error: String?
@@ -30,6 +31,7 @@ final class ExportQueue {
         ?? (FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask)[0].appendingPathComponent("kYNEDIT").path) {
         didSet { UserDefaults.standard.set(outputDir, forKey: "exportDir") }
     }
+    var useLUT = false   // applique le LUT chargé dans le lecteur aux prochains exports
     private var transcoders: [UUID: Transcoder] = [:]
 
     private static var fileURL: URL {
@@ -48,13 +50,13 @@ final class ExportQueue {
 
     private func save() { try? JSONEncoder().encode(jobs).write(to: Self.fileURL, options: .atomic) }
 
-    func add(clip: Clip, subclips: [Subclip]) {
+    func add(clip: Clip, subclips: [Subclip], lutPath: String? = nil) {
         guard clip.kind == .video else { return }
         if subclips.isEmpty {
-            jobs.append(ExportJob(path: clip.path, name: clip.name, preset: preset, outputDir: outputDir, suffix: ""))
+            jobs.append(ExportJob(path: clip.path, name: clip.name, preset: preset, outputDir: outputDir, suffix: "", lutPath: lutPath))
         } else {
             for s in subclips {
-                jobs.append(ExportJob(path: clip.path, name: "\(clip.name) · \(s.name)", tin: s.tin, tout: s.tout, preset: preset, outputDir: outputDir, suffix: "_" + s.name.replacingOccurrences(of: " ", with: "")))
+                jobs.append(ExportJob(path: clip.path, name: "\(clip.name) · \(s.name)", tin: s.tin, tout: s.tout, preset: preset, outputDir: outputDir, suffix: "_" + s.name.replacingOccurrences(of: " ", with: ""), lutPath: lutPath))
             }
         }
         save(); pump()
@@ -101,7 +103,7 @@ final class ExportQueue {
         job.state = .running; job.progress = 0; job.error = nil; job.outputPath = out.path
         jobs[i] = job
         let id = job.id
-        let t = Transcoder(path: job.path, tin: job.tin, tout: job.tout, preset: job.preset, output: out)
+        let t = Transcoder(path: job.path, tin: job.tin, tout: job.tout, preset: job.preset, output: out, lutPath: job.lutPath)
         transcoders[id] = t
         save()
         Task {

@@ -108,8 +108,19 @@ struct InspectorPanel: View {
                                 Text(L("export.choose")).font(.system(size: 11)).foregroundColor(Socle.accentText).onTapGesture { model.exports.chooseFolder() }
                             }
                             let subs = model.player.clip?.path == clip.path ? model.player.subclips.count : 0 // même source que le bouton après chargement
-                            Text(subs > 0 ? L("export.subclips", subs) : L("export.whole")).font(.system(size: 11)).foregroundColor(Socle.subtle)
-                            button(L("action.queue"), main: true) { model.addExport(clip) }
+                            Text(subs > 1 ? L("export.subclips", subs) : subs == 1 ? L("export.subclip.one") : L("export.whole")).font(.system(size: 11)).foregroundColor(Socle.subtle)
+                            if let lut = model.player.lutURL {
+                                HStack(spacing: 6) {
+                                    Text(model.exports.useLUT ? "☑" : "☐").foregroundColor(Socle.accentText)
+                                    Text(L("export.lut", lut.deletingPathExtension().lastPathComponent)).font(.system(size: 11)).foregroundColor(Socle.text).lineLimit(1)
+                                }.contentShape(Rectangle()).onTapGesture { model.exports.useLUT.toggle() }
+                            }
+                            if model.selection.count > 1 {
+                                Text(L("export.multi", model.selection.count)).font(.system(size: 11)).foregroundColor(Socle.subtle)
+                                button(L("action.queue.n", model.selection.count), main: true) { model.addSelectionToExport() }
+                            } else {
+                                button(L("action.queue"), main: true) { model.addExport(clip) }
+                            }
                         }
                     }
                 }

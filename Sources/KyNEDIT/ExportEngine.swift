@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import VideoToolbox
+import CoreImage
 
 enum ExportPreset: String, Codable, CaseIterable, Sendable {
     case proRes422HQ, h264, hevc
@@ -21,13 +22,13 @@ struct ExportError: LocalizedError, Sendable { let message: String; var errorDes
 struct MediaPair: @unchecked Sendable { let out: AVAssetReaderTrackOutput; let input: AVAssetWriterInput }
 
 final class Transcoder: @unchecked Sendable {
-    private let path: String, tin: Double?, tout: Double?, preset: ExportPreset, output: URL
+    private let path: String, tin: Double?, tout: Double?, preset: ExportPreset, output: URL, lutPath: String?
     private let lock = NSLock()
     private var cancelled = false
     private var reader: AVAssetReader?, writer: AVAssetWriter?
 
-    init(path: String, tin: Double?, tout: Double?, preset: ExportPreset, output: URL) {
-        self.path = path; self.tin = tin; self.tout = tout; self.preset = preset; self.output = output
+    init(path: String, tin: Double?, tout: Double?, preset: ExportPreset, output: URL, lutPath: String? = nil) {
+        self.path = path; self.tin = tin; self.tout = tout; self.preset = preset; self.output = output; self.lutPath = lutPath
     }
 
     func cancel() {
@@ -50,13 +51,24 @@ final class Transcoder: @unchecked Sendable {
         try? FileManager.default.removeItem(at: part)
 
         // Formats de pixels essayés dans l'ordre : le plus proche de la cible, puis BGRA (universel).
-        let pixels: [OSType] = preset.isProRes ? [kCVPixelFormatType_422YpCbCr10, kCVPixelFormatType_32BGRA]
-                                               : [kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, kCVPixelFormatType_32BGRA]
+        // HEVC en 10 bits quand la source est en 10 bits ou plus (ProRes compris), sinon 8 bits.
+        var tenBit = false
+        if let d = try await vTrack.load(.formatDescriptions).first {
+            let bits = (CMFormatDescriptionGetExtension(d, extensionKey: kCMFormatDescriptionExtension_BitsPerComponent) as? Int) ?? 0
+            let sub = CMFormatDescriptionGetMediaSubType(d)
+            tenBit = bits >= 10 || [kCMVideoCodecType_AppleProRes422, kCMVideoCodecType_AppleProRes422HQ, kCMVideoCodecType_AppleProRes422LT, kCMVideoCodecType_AppleProRes422Proxy, kCMVideoCodecType_AppleProRes4444, kCMVideoCodecType_AppleProRes4444XQ].contains(sub)
+        }
+        let hevc10 = preset == .hevc && tenBit
+        var pixels: [OSType]
+        if lutPath != nil { pixels = [kCVPixelFormatType_32BGRA] }   // le filtre Core Image travaille en BGRA
+        else if preset.isProRes { pixels = [kCVPixelFormatType_422YpCbCr10, kCVPixelFormatType_32BGRA] }
+        else if hevc10 { pixels = [kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange, kCVPixelFormatType_32BGRA] }
+        else { pixels = [kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, kCVPixelFormatType_32BGRA] }
         var lastError: Error = ExportError(message: "Lecture impossible.")
         for pixel in pixels {
             do {
                 let written = try await attempt(asset: asset, vTrack: vTrack, size: size, fps: Double(fps), transform: transform,
-                                                range: range, span: span, pixel: pixel, part: part, progress: progress)
+                                                range: range, span: span, pixel: pixel, hevc10: hevc10, part: part, progress: progress)
                 try? FileManager.default.removeItem(at: output)
                 try FileManager.default.moveItem(at: part, to: output)
                 // Contrôle : la durée écrite doit correspondre à la plage demandée (à 2 images près).
@@ -77,7 +89,7 @@ final class Transcoder: @unchecked Sendable {
     }
 
     private func attempt(asset: AVURLAsset, vTrack: AVAssetTrack, size: CGSize, fps: Double, transform: CGAffineTransform,
-                         range: CMTimeRange, span: Double, pixel: OSType, part: URL,
+                         range: CMTimeRange, span: Double, pixel: OSType, hevc10: Bool, part: URL,
                          progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
         let reader = try AVAssetReader(asset: asset); reader.timeRange = range
         let vOut = AVAssetReaderTrackOutput(track: vTrack, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: pixel])
@@ -91,7 +103,7 @@ final class Transcoder: @unchecked Sendable {
             let bpp = preset == .hevc ? 0.07 : 0.12
             let bitrate = max(4_000_000, Int(size.width * size.height * max(fps, 24) * bpp))
             var props: [String: Any] = [AVVideoAverageBitRateKey: bitrate, AVVideoExpectedSourceFrameRateKey: max(fps, 24)]
-            if preset == .hevc { props[AVVideoProfileLevelKey] = kVTProfileLevel_HEVC_Main_AutoLevel as String }
+            if preset == .hevc { props[AVVideoProfileLevelKey] = (hevc10 ? kVTProfileLevel_HEVC_Main10_AutoLevel : kVTProfileLevel_HEVC_Main_AutoLevel) as String }
             else { props[AVVideoProfileLevelKey] = AVVideoProfileLevelH264HighAutoLevel; props[AVVideoAllowFrameReorderingKey] = true }
             settings[AVVideoCompressionPropertiesKey] = props
         }
@@ -99,6 +111,23 @@ final class Transcoder: @unchecked Sendable {
         vIn.transform = transform; vIn.expectsMediaDataInRealTime = false
         guard writer.canAdd(vIn) else { throw ExportError(message: "Réglage vidéo refusé par l'encodeur.") }
         writer.add(vIn)
+        // LUT : chaque image passe par Core Image (même filtre que l'aperçu), puis dans le tampon de l'encodeur.
+        var lutHandler: (@Sendable (CMSampleBuffer) -> Bool)?
+        if let lutPath, let cube = PlayerModel.parseCube(URL(fileURLWithPath: lutPath)) {
+            let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: Int(size.width), kCVPixelBufferHeightKey as String: Int(size.height)])
+            let ctx = CIContext(options: nil), space = CGColorSpace(name: CGColorSpace.sRGB)!
+            let dim = cube.size, data = cube.data
+            nonisolated(unsafe) let adaptorRef = adaptor
+            lutHandler = { buf in
+                guard let src = CMSampleBufferGetImageBuffer(buf), let pool = adaptorRef.pixelBufferPool else { return false }
+                var out: CVPixelBuffer?
+                guard CVPixelBufferPoolCreatePixelBuffer(nil, pool, &out) == kCVReturnSuccess, let out else { return false }
+                let img = CIImage(cvPixelBuffer: src).applyingFilter("CIColorCubeWithColorSpace", parameters: ["inputCubeDimension": dim, "inputCubeData": data, "inputColorSpace": space])
+                ctx.render(img, to: out)
+                return adaptorRef.append(out, withPresentationTime: CMSampleBufferGetPresentationTimeStamp(buf))
+            }
+        } else if lutPath != nil { throw ExportError(message: "LUT illisible.") }
 
         // Audio : décodé en PCM puis AAC (MP4) ou PCM (MOV).
         var aOut: AVAssetReaderTrackOutput?, aIn: AVAssetWriterInput?
@@ -117,10 +146,11 @@ final class Transcoder: @unchecked Sendable {
         writer.startSession(atSourceTime: range.start)
 
         let startSeconds = range.start.seconds
+        let videoHandler = lutHandler
         await withTaskGroup(of: Void.self) { group in
             let vPair = MediaPair(out: vOut, input: vIn)
-            group.addTask { await self.pump(vPair, queue: "video") { pts in progress(min(1, max(0, (pts - startSeconds) / span))) } }
-            if let aOut, let aIn { let aPair = MediaPair(out: aOut, input: aIn); group.addTask { await self.pump(aPair, queue: "audio") { _ in } } }
+            group.addTask { await self.pump(vPair, queue: "video", handler: videoHandler) { pts in progress(min(1, max(0, (pts - startSeconds) / span))) } }
+            if let aOut, let aIn { let aPair = MediaPair(out: aOut, input: aIn); group.addTask { await self.pump(aPair, queue: "audio", handler: nil) { _ in } } }
         }
         if isCancelled { writer.cancelWriting(); throw ExportError(message: "Annulé.") }
         if reader.status == .failed { writer.cancelWriting(); throw reader.error ?? ExportError(message: "Lecture interrompue.") }
@@ -131,7 +161,7 @@ final class Transcoder: @unchecked Sendable {
     }
 
     /// Copie les échantillons d'une sortie du lecteur vers une entrée de l'écrivain, à son rythme.
-    private func pump(_ pair: MediaPair, queue name: String, pts: @escaping @Sendable (Double) -> Void) async {
+    private func pump(_ pair: MediaPair, queue name: String, handler: (@Sendable (CMSampleBuffer) -> Bool)?, pts: @escaping @Sendable (Double) -> Void) async {
         let out = pair.out, input = pair.input
         await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
             let q = DispatchQueue(label: "kynedit.export.\(name)")
@@ -141,7 +171,7 @@ final class Transcoder: @unchecked Sendable {
                     if self.isCancelled { done = true; input.markAsFinished(); c.resume(); return }
                     if let buf = out.copyNextSampleBuffer() {
                         pts(CMSampleBufferGetPresentationTimeStamp(buf).seconds)
-                        if !input.append(buf) { done = true; input.markAsFinished(); c.resume(); return }
+                        if !(handler?(buf) ?? input.append(buf)) { done = true; input.markAsFinished(); c.resume(); return }
                     } else { done = true; input.markAsFinished(); c.resume(); return }
                 }
             }
