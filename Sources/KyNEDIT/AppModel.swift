@@ -7,6 +7,10 @@ final class AppModel {
     let thumbs: ThumbService
     let player: PlayerModel
     var selected: Clip?
+    var selectedInfo: MediaInfo?
+    var meta: [String: ClipMeta] = [:]
+    var ratingMin = 0 { didSet { refresh() } }
+    var colorFilter = 0 { didSet { refresh() } }
     var focusTick = 0 // change à chaque sélection : le panneau lecteur reprend alors le clavier (sinon la recherche le garde)
     var gridMode = true
     var root: URL?
@@ -27,6 +31,10 @@ final class AppModel {
             let handled: Bool = MainActor.assumeIsolated {
                 guard let self, self.selected != nil, !flags.contains(.command) else { return false }
                 if (NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first)?.firstResponder is NSText { return false }
+                if let sel = self.selected, let d = Int(chars), (0...8).contains(d) {
+                    if d <= 5 { self.setRating(sel, d == 0 ? self.metaFor(sel).rating : d) } else { self.setColor(sel, d - 5) }
+                    return true
+                }
                 return self.player.handleKey(chars: chars, keyCode: code, shift: flags.contains(.shift))
             }
             return handled ? nil : e
@@ -38,8 +46,26 @@ final class AppModel {
     func select(_ clip: Clip) {
         selected = clip; focusTick += 1
         (NSApp.mainWindow ?? NSApp.windows.first)?.makeFirstResponder(nil) // la recherche lâche le clavier : les touches vont au lecteur
-        Task { let info = await thumbs.load(clip).info; await player.open(clip, info: info) }
+        Task { let info = await thumbs.load(clip).info; selectedInfo = info; await player.open(clip, info: info) }
     }
+
+    // MARK: métadonnées
+    func metaFor(_ clip: Clip) -> ClipMeta { meta[clip.path] ?? ClipMeta() }
+
+    private func update(_ clip: Clip, _ change: (inout ClipMeta) -> Void, tags: Bool = false) {
+        var m = metaFor(clip); change(&m); meta[clip.path] = m
+        let c = catalog, path = clip.path
+        Task { await c.saveMeta(path: path, rating: m.rating, color: m.color, note: m.note); if tags { await c.setTags(path: path, tags: m.tags) } }
+    }
+    func setRating(_ clip: Clip, _ r: Int) { update(clip) { $0.rating = ($0.rating == r ? 0 : r) } }
+    func setColor(_ clip: Clip, _ c: Int) { update(clip) { $0.color = ($0.color == c ? 0 : c) } }
+    func setNote(_ clip: Clip, _ n: String) { update(clip) { $0.note = n } }
+    func addTag(_ clip: Clip, _ t: String) {
+        let tag = t.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !tag.isEmpty else { return }
+        update(clip, { if !$0.tags.contains(tag) { $0.tags.append(tag); $0.tags.sort() } }, tags: true)
+    }
+    func removeTag(_ clip: Clip, _ t: String) { update(clip, { $0.tags.removeAll { $0 == t } }, tags: true) }
 
     func deselect() { selected = nil; player.close() }
 
@@ -59,6 +85,8 @@ final class AppModel {
         root = url; clips = []; scanned = 0; lastRefresh = 0; scanning = true
         scanCounter += 1
         let id = scanCounter, catalog = catalog
+        let metaRoot = url.path
+        Task { meta = await catalog.allMeta(root: metaRoot) }
         refresh() // affiche tout de suite ce que le catalogue connaît déjà
         scanTask = Task {
             let t0 = Date()
@@ -111,11 +139,11 @@ final class AppModel {
     func refresh() {
         guard let root else { return }
         listTask?.cancel()
-        let q = query, catalog = catalog, path = root.path
+        let q = query, catalog = catalog, path = root.path, rMin = ratingMin, colorF = colorFilter
         listTask = Task {
             try? await Task.sleep(for: .milliseconds(120)) // regroupe les frappes
             if Task.isCancelled { return }
-            let result = await catalog.list(root: path, query: q)
+            let result = await catalog.list(root: path, query: q, ratingMin: rMin, color: colorF)
             if !Task.isCancelled { clips = result }
             if selected == nil, let name = ProcessInfo.processInfo.environment["KYNEDIT_SELECT"], let c = result.first(where: { $0.name.contains(name) }) {
                 select(c) // sélection automatique pour les essais

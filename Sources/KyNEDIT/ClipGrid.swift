@@ -18,7 +18,7 @@ struct ClipGrid: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170, maximum: 260), spacing: 12)], spacing: 12) {
-                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs, selected: model.selected?.path == c.path).onTapGesture { model.select(c) } }
+                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs, selected: model.selected?.path == c.path, meta: model.meta[c.path]).onTapGesture { model.select(c) } }
             }.padding(16)
         }
     }
@@ -28,6 +28,7 @@ struct ClipCard: View {
     let clip: Clip
     let service: ThumbService
     var selected = false
+    var meta: ClipMeta?
     @State private var loaded: Loaded?
     private var line1: String { loaded?.info.map { formatInfo($0) } ?? "" }
     private var line2: String { loaded?.info?.codec ?? "" }
@@ -43,6 +44,14 @@ struct ClipCard: View {
                             Text(clip.ext.uppercased()).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.subtle)
                         }
                     }.clipped()
+                if let m = meta, m.rating > 0 || m.color > 0 {
+                    HStack(spacing: 4) {
+                        if m.color > 0 { Circle().fill(labelColors[m.color]).frame(width: 8, height: 8) }
+                        if m.rating > 0 { Text(String(repeating: "★", count: m.rating)).font(.system(size: 10)).foregroundColor(Socle.action) }
+                    }
+                    .padding(.horizontal, 5).padding(.vertical, 2).background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 3))
+                    .padding(5).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
                 if let i = loaded?.info, i.duration > 0 {
                     Text(formatDuration(i.duration)).font(.system(size: 10).monospacedDigit()).foregroundColor(.white)
                         .padding(.horizontal, 5).padding(.vertical, 1).background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 3))

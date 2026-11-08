@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "inspector.title": "Clip sélectionné", "inspector.rating": "Note", "inspector.label": "Étiquette", "inspector.tags": "Mots-clés", "inspector.tag.add": "Ajouter un mot-clé", "inspector.note": "Commentaire", "label.1": "Validé", "label.2": "À revoir", "label.3": "Rejeté", "info.resolution": "Résolution", "info.codec": "Codec", "info.duration": "Durée", "info.size": "Taille", "info.modified": "Modifié", "filter.all": "Tous", "filter.stars": "★ min.",
         "player.markers": "Marqueurs", "player.subclips": "Sous-clips", "player.subclip": "CRÉER SOUS-CLIP", "player.marker": "MARQUEUR", "player.lut": "LUT…", "player.nolut": "Sans LUT", "player.unsupported": "Ce format ne se lit pas dans le lecteur.", "player.subclipname": "Sous-clip %d", "player.markername": "Marqueur %d", "player.in": "Entrée", "player.out": "Sortie",
         "view.grid": "Grille", "view.list": "Liste",
         "list.name": "Nom", "list.type": "Type", "list.size": "Taille", "list.date": "Modifié", "scan.progress": "Analyse… %d fichiers", "scan.done": "%d médias", "kind.video": "Vidéo", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "Aucun média dans ce dossier.",
@@ -23,6 +24,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "inspector.title": "Selected clip", "inspector.rating": "Rating", "inspector.label": "Label", "inspector.tags": "Keywords", "inspector.tag.add": "Add a keyword", "inspector.note": "Comment", "label.1": "Approved", "label.2": "To review", "label.3": "Rejected", "info.resolution": "Resolution", "info.codec": "Codec", "info.duration": "Duration", "info.size": "Size", "info.modified": "Modified", "filter.all": "All", "filter.stars": "Min. ★",
         "player.markers": "Markers", "player.subclips": "Subclips", "player.subclip": "CREATE SUBCLIP", "player.marker": "MARKER", "player.lut": "LUT…", "player.nolut": "No LUT", "player.unsupported": "This format cannot be played in the viewer.", "player.subclipname": "Subclip %d", "player.markername": "Marker %d", "player.in": "In", "player.out": "Out",
         "view.grid": "Grid", "view.list": "List",
         "list.name": "Name", "list.type": "Type", "list.size": "Size", "list.date": "Modified", "scan.progress": "Scanning… %d files", "scan.done": "%d media files", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Image", "empty.folder": "No media in this folder.",
@@ -43,6 +45,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "inspector.title": "Clip seleccionado", "inspector.rating": "Valoración", "inspector.label": "Etiqueta", "inspector.tags": "Palabras clave", "inspector.tag.add": "Añadir palabra clave", "inspector.note": "Comentario", "label.1": "Aprobado", "label.2": "Por revisar", "label.3": "Rechazado", "info.resolution": "Resolución", "info.codec": "Códec", "info.duration": "Duración", "info.size": "Tamaño", "info.modified": "Modificado", "filter.all": "Todos", "filter.stars": "★ mín.",
         "player.markers": "Marcadores", "player.subclips": "Subclips", "player.subclip": "CREAR SUBCLIP", "player.marker": "MARCADOR", "player.lut": "LUT…", "player.nolut": "Sin LUT", "player.unsupported": "Este formato no se puede reproducir en el visor.", "player.subclipname": "Subclip %d", "player.markername": "Marcador %d", "player.in": "Entrada", "player.out": "Salida",
         "view.grid": "Cuadrícula", "view.list": "Lista",
         "list.name": "Nombre", "list.type": "Tipo", "list.size": "Tamaño", "list.date": "Modificado", "scan.progress": "Analizando… %d archivos", "scan.done": "%d medios", "kind.video": "Vídeo", "kind.audio": "Audio", "kind.image": "Imagen", "empty.folder": "Ningún medio en esta carpeta.",
@@ -63,6 +66,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "inspector.title": "Clip selezionato", "inspector.rating": "Valutazione", "inspector.label": "Etichetta", "inspector.tags": "Parole chiave", "inspector.tag.add": "Aggiungi parola chiave", "inspector.note": "Commento", "label.1": "Approvato", "label.2": "Da rivedere", "label.3": "Scartato", "info.resolution": "Risoluzione", "info.codec": "Codec", "info.duration": "Durata", "info.size": "Dimensione", "info.modified": "Modificato", "filter.all": "Tutti", "filter.stars": "★ min.",
         "player.markers": "Marcatori", "player.subclips": "Sottoclip", "player.subclip": "CREA SOTTOCLIP", "player.marker": "MARCATORE", "player.lut": "LUT…", "player.nolut": "Senza LUT", "player.unsupported": "Questo formato non è riproducibile nel visore.", "player.subclipname": "Sottoclip %d", "player.markername": "Marcatore %d", "player.in": "Ingresso", "player.out": "Uscita",
         "view.grid": "Griglia", "view.list": "Elenco",
         "list.name": "Nome", "list.type": "Tipo", "list.size": "Dimensione", "list.date": "Modificato", "scan.progress": "Analisi… %d file", "scan.done": "%d media", "kind.video": "Video", "kind.audio": "Audio", "kind.image": "Immagine", "empty.folder": "Nessun media in questa cartella.",

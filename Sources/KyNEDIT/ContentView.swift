@@ -31,8 +31,14 @@ struct ContentView: View {
                 Sidebar(model: model).frame(width: 200)
                 Divider().overlay(Socle.border)
                 VStack(spacing: 0) {
-                    Group {
-                        if model.root == nil { EmptyState(model: model) } else { ClipList(model: model) }
+                    HStack(spacing: 0) {
+                        Group {
+                            if model.root == nil { EmptyState(model: model) } else { ClipList(model: model) }
+                        }
+                        if let sel = model.selected {
+                            Divider().overlay(Socle.border)
+                            InspectorPanel(model: model, clip: sel)
+                        }
                     }
                     if model.selected != nil {
                         Divider().overlay(Socle.border)
@@ -101,6 +107,7 @@ struct ClipList: View {
                 Text(model.scanning ? L("scan.progress", model.scanned) : L("scan.done", model.clips.count))
                     .foregroundColor(Socle.muted)
                 Spacer()
+                filters
                 HStack(spacing: 2) {
                     ForEach([true, false], id: \.self) { g in
                         Text(L(g ? "view.grid" : "view.list")).font(.system(size: 12))
@@ -142,6 +149,17 @@ struct ClipList: View {
             }
         }
     }
+    private var filters: some View {
+        HStack(spacing: 10) {
+            StarRating(value: model.ratingMin, size: 13) { model.ratingMin = model.ratingMin == $0 ? 0 : $0 }
+            ForEach(1...3, id: \.self) { c in
+                Circle().fill(labelColors[c]).frame(width: 10, height: 10)
+                    .overlay(Circle().stroke(model.colorFilter == c ? Color.white : .clear, lineWidth: 1.5).padding(-3))
+                    .contentShape(Rectangle().inset(by: -4)).onTapGesture { model.colorFilter = model.colorFilter == c ? 0 : c }
+            }
+        }.padding(.trailing, 8)
+    }
+
     @ViewBuilder func col(_ t: String, _ w: CGFloat?) -> some View {
         Text(t.uppercased()).font(.system(size: 10.5)).tracking(0.6).foregroundColor(Socle.subtle)
             .frame(maxWidth: w == nil ? .infinity : w, alignment: .leading).frame(width: w)

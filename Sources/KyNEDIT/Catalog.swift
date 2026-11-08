@@ -18,6 +18,9 @@ struct KnownDirs: Sendable {
     var children: [String: [String]] = [:]
 }
 
+/// Métadonnées de l'utilisateur sur un clip : note 0–5, étiquette de couleur (0 aucune, 1 validé, 2 à revoir, 3 rejeté), commentaire, mots-clés.
+struct ClipMeta: Sendable, Equatable { var rating = 0; var color = 0; var note = ""; var tags: [String] = [] }
+
 struct Marker: Identifiable, Sendable, Hashable { let id: Int64; var time: Double; var label: String }
 struct Subclip: Identifiable, Sendable, Hashable { let id: Int64; var tin: Double; var tout: Double; var name: String }
 
@@ -59,6 +62,9 @@ actor Catalog {
             "CREATE INDEX IF NOT EXISTS markers_path ON markers(path)",
             "CREATE TABLE IF NOT EXISTS subclips(id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, tin REAL NOT NULL, tout REAL NOT NULL, name TEXT NOT NULL DEFAULT '')",
             "CREATE INDEX IF NOT EXISTS subclips_path ON subclips(path)",
+            "CREATE TABLE IF NOT EXISTS meta(path TEXT PRIMARY KEY, rating INTEGER NOT NULL DEFAULT 0, color INTEGER NOT NULL DEFAULT 0, note TEXT NOT NULL DEFAULT '')",
+            "CREATE TABLE IF NOT EXISTS tags(path TEXT NOT NULL, tag TEXT NOT NULL, PRIMARY KEY(path, tag))",
+            "CREATE INDEX IF NOT EXISTS tags_tag ON tags(tag)",
             "CREATE TABLE IF NOT EXISTS probe(path TEXT PRIMARY KEY, mtime REAL NOT NULL, duration REAL, width INTEGER, height INTEGER, fps REAL, codec TEXT)",
             "CREATE VIRTUAL TABLE IF NOT EXISTS files_fts USING fts5(name, content='files', content_rowid='rowid', tokenize='unicode61')",
         ] { sqlite3_exec(handle, sql, nil, nil, nil) }
@@ -195,19 +201,66 @@ actor Catalog {
 
     func deleteSubclip(id: Int64) { sqlite3_exec(db, "DELETE FROM subclips WHERE id=\(id)", nil, nil, nil) }
 
+    // MARK: métadonnées
+    /// Toutes les métadonnées des clips sous `root` (seuls les clips annotés ont une ligne).
+    func allMeta(root: String) -> [String: ClipMeta] {
+        var out: [String: ClipMeta] = [:]
+        let like = Catalog.likePattern(root).replacingOccurrences(of: "/%", with: "/%")
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "SELECT path,rating,color,note FROM meta WHERE path LIKE ? ESCAPE '\\'", -1, &st, nil)
+        sqlite3_bind_text(st, 1, like, -1, transient)
+        while sqlite3_step(st) == SQLITE_ROW {
+            out[String(cString: sqlite3_column_text(st, 0))] = ClipMeta(rating: Int(sqlite3_column_int(st, 1)), color: Int(sqlite3_column_int(st, 2)), note: String(cString: sqlite3_column_text(st, 3)))
+        }
+        sqlite3_finalize(st)
+        sqlite3_prepare_v2(db, "SELECT path,tag FROM tags WHERE path LIKE ? ESCAPE '\\' ORDER BY tag", -1, &st, nil)
+        sqlite3_bind_text(st, 1, like, -1, transient)
+        while sqlite3_step(st) == SQLITE_ROW {
+            out[String(cString: sqlite3_column_text(st, 0)), default: ClipMeta()].tags.append(String(cString: sqlite3_column_text(st, 1)))
+        }
+        sqlite3_finalize(st)
+        return out
+    }
+
+    func saveMeta(path: String, rating: Int, color: Int, note: String) {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT INTO meta(path,rating,color,note) VALUES(?,?,?,?) ON CONFLICT(path) DO UPDATE SET rating=excluded.rating, color=excluded.color, note=excluded.note", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_int(st, 2, Int32(rating)); sqlite3_bind_int(st, 3, Int32(color)); sqlite3_bind_text(st, 4, note, -1, transient)
+        sqlite3_step(st); sqlite3_finalize(st)
+    }
+
+    func setTags(path: String, tags: [String]) {
+        sqlite3_exec(db, "BEGIN", nil, nil, nil)
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "DELETE FROM tags WHERE path=?", -1, &st, nil)
+        sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_step(st); sqlite3_finalize(st)
+        sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO tags(path,tag) VALUES(?,?)", -1, &st, nil)
+        for t in tags { sqlite3_reset(st); sqlite3_bind_text(st, 1, path, -1, transient); sqlite3_bind_text(st, 2, t, -1, transient); sqlite3_step(st) }
+        sqlite3_finalize(st)
+        sqlite3_exec(db, "COMMIT", nil, nil, nil)
+    }
+
     /// Fichiers sous un dossier (récursif), filtrés par recherche plein texte (préfixes) si `query` n'est pas vide.
-    func list(root: String, query: String, limit: Int = 50_000) -> [Clip] {
-        var sql = "SELECT f.path,f.name,f.ext,f.size,f.mtime,f.kind FROM files f"
-        let terms = query.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map { "\"\($0)\"*" }
-        if !terms.isEmpty { sql += " JOIN files_fts ON files_fts.rowid=f.rowid AND files_fts MATCH ?" }
-        sql += " WHERE (f.folder=? OR f.folder LIKE ? ESCAPE '\\') ORDER BY f.name COLLATE NOCASE LIMIT ?"
+    func list(root: String, query: String, ratingMin: Int = 0, color: Int = 0, limit: Int = 50_000) -> [Clip] {
+        enum Bind { case text(String), int(Int) }
+        var conds = ["(f.folder=? OR f.folder LIKE ? ESCAPE '\\')"]
+        var binds: [Bind] = [.text(root), .text(Catalog.likePattern(root))]
+        let q = query.trimmingCharacters(in: .whitespaces)
+        let terms = q.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map { "\"\($0)\"*" }
+        if !terms.isEmpty {
+            // le nom (recherche plein texte par préfixes), un mot-clé ou le commentaire
+            conds.append("(f.rowid IN (SELECT rowid FROM files_fts WHERE files_fts MATCH ?) OR f.path IN (SELECT path FROM tags WHERE tag LIKE ?) OR f.path IN (SELECT path FROM meta WHERE note LIKE ?))")
+            binds += [.text(terms.joined(separator: " ")), .text("%" + q + "%"), .text("%" + q + "%")]
+        }
+        if ratingMin > 0 { conds.append("f.path IN (SELECT path FROM meta WHERE rating>=?)"); binds.append(.int(ratingMin)) }
+        if color > 0 { conds.append("f.path IN (SELECT path FROM meta WHERE color=?)"); binds.append(.int(color)) }
+        let sql = "SELECT f.path,f.name,f.ext,f.size,f.mtime,f.kind FROM files f WHERE " + conds.joined(separator: " AND ") + " ORDER BY f.name COLLATE NOCASE LIMIT ?"
+        binds.append(.int(limit))
         var st: OpaquePointer?
         sqlite3_prepare_v2(db, sql, -1, &st, nil)
-        var i: Int32 = 1
-        if !terms.isEmpty { sqlite3_bind_text(st, i, terms.joined(separator: " "), -1, transient); i += 1 }
-        sqlite3_bind_text(st, i, root, -1, transient); i += 1
-        sqlite3_bind_text(st, i, Catalog.likePattern(root), -1, transient); i += 1
-        sqlite3_bind_int(st, i, Int32(limit))
+        for (i, b) in binds.enumerated() {
+            switch b { case .text(let t): sqlite3_bind_text(st, Int32(i + 1), t, -1, transient); case .int(let n): sqlite3_bind_int(st, Int32(i + 1), Int32(n)) }
+        }
         var out: [Clip] = []
         while sqlite3_step(st) == SQLITE_ROW {
             out.append(Clip(path: String(cString: sqlite3_column_text(st, 0)), name: String(cString: sqlite3_column_text(st, 1)),
