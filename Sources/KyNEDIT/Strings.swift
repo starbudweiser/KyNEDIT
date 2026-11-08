@@ -3,6 +3,7 @@ enum Strings {
     static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
 
     static let fr: [String: String] = [
+        "upd.title": "Mises à jour", "upd.auto": "Installer automatiquement les mises à jour", "upd.check": "Rechercher une mise à jour", "upd.install": "Installer la version %@", "upd.version": "Version installée : %@", "upd.checking": "Recherche en cours…", "upd.uptodate": "kYNEDIT est à jour (version %@).", "upd.available": "La version %@ est disponible.", "upd.downloading": "Téléchargement et installation… l'application va redémarrer.", "upd.failed": "Échec de la mise à jour : %@", "upd.busy": "Un export est en cours : l'installation attendra sa fin.", "upd.err.none": "Aucune version publiée.", "upd.err.download": "Téléchargement impossible.", "upd.err.signature": "Signature de la mise à jour invalide.", "upd.err.version": "La mise à jour n'est pas plus récente que la version installée.", "settings.menu": "Réglages…",
         "exchange.created": "Fichier créé : %@", "exchange.open": "OUVRIR DANS %@", "exchange.empty": "Aucun clip vidéo à envoyer.", "exchange.hint": "Envoie les clips sélectionnés (sous-clips, marqueurs, mots-clés, notes).",
         "raw.badge": "RAW", "export.raw": "Format RAW : l'export demande le SDK du fabricant, non installé.", "player.raw": "Format RAW : lecture indisponible sans le SDK du fabricant.",
         "export.subclip.one": "Exporte le sous-clip",
@@ -31,6 +32,7 @@ enum Strings {
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
+        "upd.title": "Updates", "upd.auto": "Install updates automatically", "upd.check": "Check for updates", "upd.install": "Install version %@", "upd.version": "Installed version: %@", "upd.checking": "Checking…", "upd.uptodate": "kYNEDIT is up to date (version %@).", "upd.available": "Version %@ is available.", "upd.downloading": "Downloading and installing… the app will restart.", "upd.failed": "Update failed: %@", "upd.busy": "An export is running: the installation will wait until it ends.", "upd.err.none": "No published release.", "upd.err.download": "Download failed.", "upd.err.signature": "Invalid update signature.", "upd.err.version": "The update is not newer than the installed version.", "settings.menu": "Settings…",
         "exchange.created": "File created: %@", "exchange.open": "OPEN IN %@", "exchange.empty": "No video clip to send.", "exchange.hint": "Sends the selected clips (subclips, markers, keywords, notes).",
         "raw.badge": "RAW", "export.raw": "RAW format: export needs the manufacturer's SDK, which is not installed.", "player.raw": "RAW format: playback is unavailable without the manufacturer's SDK.",
         "export.subclip.one": "Exports the subclip",
@@ -59,6 +61,7 @@ enum Strings {
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
+        "upd.title": "Actualizaciones", "upd.auto": "Instalar las actualizaciones automáticamente", "upd.check": "Buscar actualizaciones", "upd.install": "Instalar la versión %@", "upd.version": "Versión instalada: %@", "upd.checking": "Buscando…", "upd.uptodate": "kYNEDIT está actualizado (versión %@).", "upd.available": "La versión %@ está disponible.", "upd.downloading": "Descargando e instalando… la aplicación se reiniciará.", "upd.failed": "Error de actualización: %@", "upd.busy": "Hay una exportación en curso: la instalación esperará a que termine.", "upd.err.none": "Ninguna versión publicada.", "upd.err.download": "Descarga imposible.", "upd.err.signature": "Firma de la actualización no válida.", "upd.err.version": "La actualización no es más reciente que la versión instalada.", "settings.menu": "Ajustes…",
         "exchange.created": "Archivo creado: %@", "exchange.open": "ABRIR EN %@", "exchange.empty": "Ningún clip de vídeo para enviar.", "exchange.hint": "Envía los clips seleccionados (subclips, marcadores, palabras clave, notas).",
         "raw.badge": "RAW", "export.raw": "Formato RAW: la exportación requiere el SDK del fabricante, no instalado.", "player.raw": "Formato RAW: reproducción no disponible sin el SDK del fabricante.",
         "export.subclip.one": "Exporta el subclip",
@@ -87,6 +90,7 @@ enum Strings {
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
+        "upd.title": "Aggiornamenti", "upd.auto": "Installa automaticamente gli aggiornamenti", "upd.check": "Cerca aggiornamenti", "upd.install": "Installa la versione %@", "upd.version": "Versione installata: %@", "upd.checking": "Ricerca in corso…", "upd.uptodate": "kYNEDIT è aggiornato (versione %@).", "upd.available": "La versione %@ è disponibile.", "upd.downloading": "Download e installazione… l'app si riavvierà.", "upd.failed": "Aggiornamento non riuscito: %@", "upd.busy": "Un'esportazione è in corso: l'installazione attenderà la fine.", "upd.err.none": "Nessuna versione pubblicata.", "upd.err.download": "Download impossibile.", "upd.err.signature": "Firma dell'aggiornamento non valida.", "upd.err.version": "L'aggiornamento non è più recente della versione installata.", "settings.menu": "Impostazioni…",
         "exchange.created": "File creato: %@", "exchange.open": "APRI IN %@", "exchange.empty": "Nessun clip video da inviare.", "exchange.hint": "Invia i clip selezionati (sottoclip, marcatori, parole chiave, note).",
         "raw.badge": "RAW", "export.raw": "Formato RAW: l'esportazione richiede l'SDK del produttore, non installato.", "player.raw": "Formato RAW: riproduzione non disponibile senza l'SDK del produttore.",
         "export.subclip.one": "Esporta il sottoclip",

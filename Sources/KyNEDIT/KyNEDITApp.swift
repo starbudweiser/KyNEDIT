@@ -16,5 +16,6 @@ struct KyNEDITApp: App {
                 Button(L("about.menu")) { AboutWindow.show() }
             }
         }
+        Settings { SettingsView() }
     }
 }

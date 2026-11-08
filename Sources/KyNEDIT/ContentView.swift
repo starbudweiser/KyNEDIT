@@ -7,6 +7,7 @@ enum Tab: CaseIterable { case explorer, exports, performance
 struct ContentView: View {
     @State private var model = AppModel()
     @State private var tab: Tab = .explorer
+    private let updateTimer = Timer.publish(every: 600, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,6 +53,8 @@ struct ContentView: View {
         }
         .background(Socle.bg)
         .onAppear { model.installKeyMonitor() }
+        .onAppear { Updater.shared.isBusy = { [exports = model.exports] in exports.pendingCount > 0 }; Updater.shared.tick() }
+        .onReceive(updateTimer) { _ in Updater.shared.tick() }
         .onAppear { // ouverture automatique d'un dossier pour les essais (KYNEDIT_OPEN=/chemin)
             if let p = ProcessInfo.processInfo.environment["KYNEDIT_OPEN"] { model.open(URL(fileURLWithPath: p)) }
         }

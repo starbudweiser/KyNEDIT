@@ -5,3 +5,4 @@ PASSATION_*.md
 .DS_Store
 vendor/
 Sources/SDKs/
+dist/

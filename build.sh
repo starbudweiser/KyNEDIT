@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 NAME=kYNEDIT; TARGET=KyNEDIT; BUNDLE_ID=com.starbudweiser.kynedit; VERSION="${1:-0.1.0}"
-DEST="$HOME/Applications/Applications Personnelles"
+DEST="${DEST:-$HOME/Applications/Applications Personnelles}"
 swift build -c release --arch arm64
 BIN="$(swift build -c release --arch arm64 --show-bin-path)/$TARGET"
 APP="$DEST/$NAME.app"
