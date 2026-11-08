@@ -46,6 +46,18 @@ final class ThumbService: @unchecked Sendable {
         return String(h, radix: 16)
     }
 
+    /// Diagnostic (banc d'essai) : motif de l'échec de la vignette d'un clip.
+    func debugError(_ clip: Clip, duration: Double) async -> String {
+        let gen = AVAssetImageGenerator(asset: AVURLAsset(url: URL(fileURLWithPath: clip.path)))
+        gen.appliesPreferredTrackTransform = true
+        gen.maximumSize = CGSize(width: Self.maxSide, height: Self.maxSide)
+        gen.requestedTimeToleranceBefore = .positiveInfinity; gen.requestedTimeToleranceAfter = .positiveInfinity
+        do { _ = try await gen.image(at: CMTime(seconds: duration * 0.1, preferredTimescale: 600)); return "ok au 2e essai" }
+        catch { return "\(error.localizedDescription)" }
+    }
+
+    func clearMemory() { memory.removeAllObjects(); infoMemory.removeAllObjects() }
+
     func load(_ clip: Clip) async -> Loaded {
         let k = key(clip)
         // 1. en-têtes : mémoire puis base

@@ -46,6 +46,31 @@ final class AppModel {
             }
             scanning = false
             refresh()
+            if let out = ProcessInfo.processInfo.environment["KYNEDIT_THUMBS"] { // banc d'essai des vignettes (essais uniquement)
+                let sample = Array(await catalog.list(root: url.path, query: "").filter { $0.kind == .video }.prefix(200))
+                var lines = "clips vidéo testés : \(sample.count)\n"
+                for pass in ["à froid (sonde + vignette)", "en-têtes en base, vignettes sur disque"] {
+                    if pass.hasPrefix("en-têtes") { thumbs.clearMemory() }
+                    let t = Date(); var ok = 0
+                    await withTaskGroup(of: Bool.self) { g in
+                        for c in sample { g.addTask { [thumbs] in await thumbs.load(c).jpeg != nil } }
+                        for await r in g where r { ok += 1 }
+                    }
+                    let dt = Date().timeIntervalSince(t)
+                    lines += String(format: "%@ : %d vignettes en %.2fs (%.1f ms/clip, %.0f clips/s)\n", pass, ok, dt, dt * 1000 / Double(max(sample.count, 1)), Double(sample.count) / dt)
+                }
+                var hist: [String: Int] = [:]; var shown = 0
+                for c in sample {
+                    let l = await thumbs.load(c)
+                    if l.jpeg == nil {
+                        let why = await thumbs.debugError(c, duration: l.info?.duration ?? 0)
+                        hist["\(c.ext) | \(l.info?.codec ?? "?") | \(why)", default: 0] += 1
+                        if shown < 3 { lines += "échec : \(c.name) (\(c.size / 1_000_000) Mo)\n"; shown += 1 }
+                    }
+                }
+                for (k, v) in hist { lines += "\(v) × \(k)\n" }
+                try? lines.write(toFile: out, atomically: true, encoding: .utf8)
+            }
             if let out = ProcessInfo.processInfo.environment["KYNEDIT_BENCH"] { // banc d'essai (essais uniquement)
                 let scanT = Date().timeIntervalSince(t0)
                 let t1 = Date(); let all = await catalog.list(root: url.path, query: "")
