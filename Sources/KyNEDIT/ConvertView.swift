@@ -13,6 +13,7 @@ final class ConvertModel {
     var custom: [ConvertPreset] = Presets.loadCustom()
     var newName = ""
     var message = ""
+    var jobIDs: [UUID] = []   // tâches lancées depuis cet onglet (suivi de la progression)
 
     var allCustom: [ConvertPreset] { custom }
 
@@ -63,7 +64,10 @@ final class ConvertModel {
             for c in list { subs[c.path] = await catalog.subclips(path: c.path) }
             let before = app.exports.jobs.count
             await app.exports.addConvert(clips: list, settings: st, outputDir: out, root: root, subclips: { subs[$0.path] ?? [] })
-            message = L("conv.queued", app.exports.jobs.count - before)
+            let new = app.exports.jobs.dropFirst(before).map(\.id)
+            let running = app.exports.jobs.contains { jobIDs.contains($0.id) && ($0.state == .waiting || $0.state == .running) }
+            jobIDs = (running ? jobIDs : []) + new
+            message = L("conv.queued", new.count)
         }
     }
 
@@ -143,11 +147,30 @@ struct ConvertView: View {
         return HStack(spacing: 12) {
             Text("\(s.codec.label) · \(s.wrap.label) · \(size) · \(rate)").font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1).truncationMode(.tail)
             Spacer(minLength: 12)
-            if !m.message.isEmpty { Text(m.message).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1) }
+            progressSummary(m)
             if !m.clips.isEmpty { SLink(title: L("conv.clear")) { m.clips = [] } }
             if !app.selection.isEmpty { button(L("conv.add.selection", app.selection.count)) { m.add(app.clips.filter { app.selection.contains($0.path) }) } }
             button(L("conv.run", m.clips.count), main: true) { if !m.clips.isEmpty { m.run(app) } }
         }.padding(.horizontal, UI.gutter).frame(height: 52).background(Socle.surface)
+    }
+
+    /// Progression des conversions lancées d'ici : barre, pourcentage, nombre terminé ; lien vers les fichiers à la fin.
+    @ViewBuilder private func progressSummary(_ m: ConvertModel) -> some View {
+        let jobs = app.exports.jobs.filter { m.jobIDs.contains($0.id) }
+        if jobs.isEmpty {
+            if !m.message.isEmpty { Text(m.message).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1) }
+        } else {
+            let running = jobs.contains { $0.state == .waiting || $0.state == .running }
+            let done = jobs.filter { $0.state == .done }.count, failed = jobs.filter { $0.state == .failed }.count
+            let p = jobs.reduce(0.0) { $0 + ($1.state == .done ? 1 : $1.state == .running ? $1.progress : 0) } / Double(jobs.count)
+            HStack(spacing: 10) {
+                Text(running ? L("atelier.progress") : failed > 0 ? L("atelier.failed", failed) : L("atelier.finished")).font(.system(size: 12))
+                    .foregroundColor(running ? Socle.muted : failed > 0 ? Color(hex: 0xF87171) : Color(hex: 0x4ADE80)).lineLimit(1)
+                ProgressView(value: p).tint(running ? Socle.action : Color(hex: 0x4ADE80)).frame(width: 140)
+                Text("\(done)/\(jobs.count) · \(Int((p * 100).rounded())) %").font(.system(size: 12).monospacedDigit()).foregroundColor(Socle.muted).lineLimit(1)
+                if !running, done > 0 { SLink(title: L("atelier.reveal")) { NSWorkspace.shared.activateFileViewerSelecting(jobs.compactMap(\.outputPath).map { URL(fileURLWithPath: $0) }) } }
+            }
+        }
     }
 
     // MARK: réglages (sections repliables)

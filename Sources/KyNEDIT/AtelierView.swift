@@ -24,6 +24,7 @@ final class AtelierModel {
     var index = 0
     var items: [TrimItem] = []
     var message = ""
+    var jobIDs: [UUID] = []       // tâches d'export lancées depuis l'atelier (suivi de la progression)
     var replaceOriginals = false   // volontairement non mémorisé : toujours décoché au lancement
     @ObservationIgnored weak var app: AppModel?
 
@@ -97,8 +98,7 @@ final class AtelierModel {
     func exportNow() {
         guard let it = currentItem(), let app, confirmReplace([it]) else { return }
         message = L("atelier.sent", 1)
-        let rep = replaceOriginals
-        Task { await app.exports.addTrims([it], outputDir: app.exports.outputDir, replace: rep) }
+        launch([it])
         go(1)
     }
 
@@ -107,9 +107,20 @@ final class AtelierModel {
         guard !items.isEmpty, let app, confirmReplace(items) else { return }
         let list = items; items = []
         message = L("atelier.sent", list.count)
-        let rep = replaceOriginals
-        Task { await app.exports.addTrims(list, outputDir: app.exports.outputDir, replace: rep) }
+        launch(list)
     }
+
+    private func launch(_ list: [TrimItem]) {
+        guard let app else { return }
+        let rep = replaceOriginals
+        if !isRunning { jobIDs = [] }   // un nouveau lot remplace le résumé du précédent
+        Task { jobIDs += await app.exports.addTrims(list, outputDir: app.exports.outputDir, replace: rep) }
+    }
+
+    var jobs: [ExportJob] { guard let app else { return [] }; return app.exports.jobs.filter { jobIDs.contains($0.id) } }
+    var isRunning: Bool { jobs.contains { $0.state == .waiting || $0.state == .running } }
+    /// Progression globale 0…1 des exports de l'atelier.
+    var progress: Double { let j = jobs; return j.isEmpty ? 0 : j.reduce(0.0) { $0 + ($1.state == .done ? 1 : $1.state == .running ? $1.progress : 0) } / Double(j.count) }
 
     /// Étape de confirmation avant de remplacer des originaux : vrai si l'export peut continuer.
     private func confirmReplace(_ list: [TrimItem]) -> Bool {
@@ -279,6 +290,23 @@ struct AtelierView: View {
 
     // MARK: panneau de droite : clips et liste d'export
 
+    @ViewBuilder private var exportProgress: some View {
+        let jobs = m.jobs
+        if !jobs.isEmpty {
+            let running = m.isRunning, failed = jobs.filter { $0.state == .failed }.count, done = jobs.filter { $0.state == .done }.count
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(running ? L("atelier.progress") : failed > 0 ? L("atelier.failed", failed) : L("atelier.finished")).font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(running ? Socle.textStrong : failed > 0 ? Color(hex: 0xF87171) : Color(hex: 0x4ADE80))
+                    Spacer()
+                    Text("\(done)/\(jobs.count)  ·  \(Int((m.progress * 100).rounded())) %").font(.system(size: 12).monospacedDigit()).foregroundColor(Socle.muted)
+                }
+                ProgressView(value: m.progress).tint(running ? Socle.action : Color(hex: 0x4ADE80))
+                if !running, done > 0 { SLink(title: L("atelier.reveal")) { NSWorkspace.shared.activateFileViewerSelecting(jobs.compactMap(\.outputPath).map { URL(fileURLWithPath: $0) }) } }
+            }
+        }
+    }
+
     private var side: some View {
         VStack(spacing: 0) {
             HStack { Text(L("atelier.clips").uppercased()).font(.system(size: 10.5)).tracking(0.8).foregroundColor(Socle.subtle); Spacer()
@@ -317,7 +345,14 @@ struct AtelierView: View {
                 }
             }.frame(maxHeight: .infinity)
             Divider().overlay(Socle.border)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
+                exportProgress
+                HStack(spacing: 10) {
+                    Text(L("conv.folder")).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1)
+                    Text(m.replaceOriginals ? L("atelier.inplace") : URL(fileURLWithPath: app.exports.outputDir).lastPathComponent).font(.system(size: 12)).foregroundColor(m.replaceOriginals ? Color(hex: 0xF87171) : Socle.text).lineLimit(1).truncationMode(.middle).help(app.exports.outputDir)
+                    Spacer(minLength: 4)
+                    if !m.replaceOriginals { SLink(title: L("export.choose")) { app.exports.chooseFolder() } }
+                }.frame(minHeight: UI.rowHeight)
                 SCheck(title: L("atelier.replace"), isOn: Binding(get: { m.replaceOriginals }, set: { m.replaceOriginals = $0 }))
                 if m.replaceOriginals { Text(L("atelier.replace.note")).font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)).fixedSize(horizontal: false, vertical: true) }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, UI.gutter).padding(.top, 10)

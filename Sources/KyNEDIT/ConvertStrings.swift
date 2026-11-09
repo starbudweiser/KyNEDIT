@@ -1,6 +1,7 @@
 // Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
 enum ConvertStrings {
     static let fr: [String: String] = [
+        "atelier.inplace": "Sur place (remplacement)", "atelier.progress": "Export en cours…", "atelier.finished": "Export terminé", "atelier.failed": "%d en erreur", "atelier.reveal": "Afficher dans le Finder",
         "atelier.addall": "Tout ajouter entier", "atelier.addedall": "%d clip(s) entier(s) ajouté(s) à la liste.",
         "atelier.listempty": "La liste est vide. Posez une entrée (I) et une sortie (O) sur un clip, puis ↩ pour y ajouter le passage.",
         "atelier.replace": "Remplacer les fichiers d'origine", "atelier.replace.note": "Chaque original élagué sera écrasé par sa version raccourcie. Une confirmation est demandée.", "atelier.replace.title": "Remplacer les fichiers d'origine ?", "atelier.replace.body": "%d fichier(s) d'origine seront remplacés définitivement par leur version élaguée. Cette opération est irréversible.", "atelier.replace.ok": "Remplacer",
@@ -32,6 +33,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
     ]
     static let en: [String: String] = [
+        "atelier.inplace": "In place (replacing)", "atelier.progress": "Exporting…", "atelier.finished": "Export finished", "atelier.failed": "%d failed", "atelier.reveal": "Show in Finder",
         "atelier.addall": "Add all whole", "atelier.addedall": "%d whole clip(s) added to the list.",
         "atelier.listempty": "The list is empty. Set an in (I) and an out (O) on a clip, then press ↩ to add the trim here.",
         "atelier.replace": "Replace the original files", "atelier.replace.note": "Each trimmed original will be overwritten by its shortened version. A confirmation is asked.", "atelier.replace.title": "Replace the original files?", "atelier.replace.body": "%d original file(s) will be permanently replaced by their trimmed version. This can't be undone.", "atelier.replace.ok": "Replace",
@@ -63,6 +65,7 @@ enum ConvertStrings {
         "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
     ]
     static let es: [String: String] = [
+        "atelier.inplace": "En el sitio (reemplazo)", "atelier.progress": "Exportando…", "atelier.finished": "Exportación terminada", "atelier.failed": "%d con error", "atelier.reveal": "Mostrar en el Finder",
         "atelier.addall": "Añadir todo entero", "atelier.addedall": "%d clip(s) entero(s) añadido(s) a la lista.",
         "atelier.listempty": "La lista está vacía. Fije una entrada (I) y una salida (O) en un clip y pulse ↩ para añadir el recorte.",
         "atelier.replace": "Reemplazar los archivos originales", "atelier.replace.note": "Cada original recortado se sobrescribirá con su versión acortada. Se pide confirmación.", "atelier.replace.title": "¿Reemplazar los archivos originales?", "atelier.replace.body": "%d archivo(s) original(es) se reemplazarán definitivamente por su versión recortada. No se puede deshacer.", "atelier.replace.ok": "Reemplazar",
@@ -94,6 +97,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
     ]
     static let it: [String: String] = [
+        "atelier.inplace": "Sul posto (sostituzione)", "atelier.progress": "Esportazione in corso…", "atelier.finished": "Esportazione terminata", "atelier.failed": "%d in errore", "atelier.reveal": "Mostra nel Finder",
         "atelier.addall": "Aggiungi tutto intero", "atelier.addedall": "%d clip interi aggiunti all'elenco.",
         "atelier.listempty": "L'elenco è vuoto. Imposta un'entrata (I) e un'uscita (O) su un clip, poi premi ↩ per aggiungere il taglio.",
         "atelier.replace": "Sostituisci i file originali", "atelier.replace.note": "Ogni originale tagliato sarà sovrascritto dalla versione accorciata. Viene chiesta una conferma.", "atelier.replace.title": "Sostituire i file originali?", "atelier.replace.body": "%d file originale/i saranno sostituiti definitivamente dalla versione tagliata. L'operazione è irreversibile.", "atelier.replace.ok": "Sostituisci",

@@ -195,7 +195,8 @@ final class ExportQueue {
     }
 
     /// Passages élagués (atelier) : copie des flux sans réencodage, une tâche par passage.
-    func addTrims(_ items: [TrimItem], outputDir: String, replace: Bool = false) async {
+    @discardableResult
+    func addTrims(_ items: [TrimItem], outputDir: String, replace: Bool = false) async -> [UUID] {
         var made: [ExportJob] = []
         for it in items {
             let swap = replace && it.canReplace(in: items)
@@ -208,6 +209,7 @@ final class ExportQueue {
             made.append(j)
         }
         jobs += made; save(); pump()
+        return made.map(\.id)
     }
 
     /// Ajoute des clips à convertir avec les réglages du module « Convertir ».
