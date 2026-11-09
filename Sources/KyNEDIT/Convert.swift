@@ -8,6 +8,7 @@ enum VCodec: String, Codable, CaseIterable, Sendable {
     case proRes422Proxy, proRes422LT, proRes422, proRes422HQ, proRes4444, proRes4444XQ
     case dnxhrLB, dnxhrSQ, dnxhrHQ, dnxhrHQX, dnxhr444, dnxhdHQ, dnxhdHQX
     case h264, hevc
+    case rewrap   // changement de conteneur sans réencodage (ffmpeg -c copy)
 
     var isProRes: Bool { rawValue.hasPrefix("proRes") }
     var isDNx: Bool { rawValue.hasPrefix("dnx") }
@@ -24,11 +25,11 @@ enum VCodec: String, Codable, CaseIterable, Sendable {
         case .proRes422Proxy: "ProRes 422 Proxy"; case .proRes422LT: "ProRes 422 LT"; case .proRes422: "ProRes 422"; case .proRes422HQ: "ProRes 422 HQ"
         case .proRes4444: "ProRes 4444"; case .proRes4444XQ: "ProRes 4444 XQ"
         case .dnxhrLB: "DNxHR LB"; case .dnxhrSQ: "DNxHR SQ"; case .dnxhrHQ: "DNxHR HQ"; case .dnxhrHQX: "DNxHR HQX"; case .dnxhr444: "DNxHR 444"
-        case .dnxhdHQ: "DNxHD (1080p, 8 bits)"; case .dnxhdHQX: "DNxHD (1080p, 10 bits)"; case .h264: "H.264"; case .hevc: "H.265 (HEVC)"
+        case .dnxhdHQ: "DNxHD (1080p, 8 bits)"; case .dnxhdHQX: "DNxHD (1080p, 10 bits)"; case .h264: "H.264"; case .hevc: "H.265 (HEVC)"; case .rewrap: L("codec.rewrap")
         }
     }
     var tag: String { label.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "").replacingOccurrences(of: ",", with: "") }
-    var allowedWraps: [Wrap] { isProRes ? [.mov] : isDNx ? [.mov, .mxf, .mxfAtom] : [.mp4, .mov] }
+    var allowedWraps: [Wrap] { self == .rewrap ? [.mov, .mp4, .mxf] : isProRes ? [.mov] : isDNx ? [.mov, .mxf, .mxfAtom] : [.mp4, .mov] }
     var ffProfile: String {
         switch self { case .dnxhrLB: "dnxhr_lb"; case .dnxhrSQ: "dnxhr_sq"; case .dnxhrHQ: "dnxhr_hq"; case .dnxhrHQX: "dnxhr_hqx"; case .dnxhr444: "dnxhr_444"; default: "" }
     }
@@ -84,6 +85,7 @@ struct ConvertSettings: Codable, Equatable, Sendable {
     var template = "{name}_{codec}"     // renommage : {name} {reel} {date} {codec} {res} {fps} {tc}
     var recreateFolders = false
     var ale = false
+    var assemble = false                // un seul fichier à partir de tous les clips de la liste
 
     /// Aucun traitement d'image : les images décodées vont telles quelles à l'encodeur (chemin le plus rapide).
     var passthroughVideo: Bool { width == 0 && fps == 0 && colorIn == .none && lutPath == nil && burn.isEmpty && logoPath == nil }
@@ -145,6 +147,8 @@ enum Presets {
         for f in [(24.0, "24"), (25.0, "25"), (30.0, "30")] {
             p.append(mk("web.h264.1080.\(f.1)", "H.264 · 1080p · \(f.1) i/s", g4, .h264) { size(&$0, 1920, 1080); $0.fps = f.0; $0.template = "{name}_1080p\(f.1)" })
         }
+        // Rewrap : nouveau conteneur, aucun réencodage
+        for w in [Wrap.mov, .mp4, .mxf] { p.append(mk("rewrap.\(w.rawValue)", "\(L("codec.rewrap")) · \(w.label)", g4, .rewrap, wrap: w) { $0.template = "{name}_rewrap" }) }
         // Rushes
         p.append(mk("daily.h264.1080", "\(L("w.dailies")) H.264 · 1080p (\(L("w.timecode")), \(L("w.reel")), \(L("w.name"))) + ALE", g5, .h264) { size(&$0, 1920, 1080); daily(&$0) })
         p.append(mk("daily.h264.720", "\(L("w.dailies")) H.264 · 720p (\(L("w.timecode")), \(L("w.name")))", g5, .h264) { size(&$0, 1280, 720); $0.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)]; $0.template = "{name}_rushes" })

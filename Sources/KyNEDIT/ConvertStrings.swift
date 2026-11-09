@@ -1,6 +1,8 @@
 // Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
 enum ConvertStrings {
     static let fr: [String: String] = [
+        "conv.assemble": "Assembler tous les clips en un seul fichier", "conv.assembly.name": "Assemblage de %d clips", "conv.assembly.suffix": "assemblage",
+        "codec.rewrap": "Rewrap (sans réencodage)",
         "rename.link": "Renommer…", "rename.title": "Renommer les clips", "rename.hint": "Variables : {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENOMMER", "rename.cancel": "ANNULER",
         "export.shotlist": "Shotlist (CSV)", "export.stills": "Images des marqueurs",
         "filter.res": "Résolution", "filter.res.all": "Toutes résolutions", "filter.fps": "Cadence", "filter.fps.all": "Toutes cadences",
@@ -21,6 +23,8 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
     ]
     static let en: [String: String] = [
+        "conv.assemble": "Join all clips into a single file", "conv.assembly.name": "Assembly of %d clips", "conv.assembly.suffix": "assembly",
+        "codec.rewrap": "Rewrap (no re-encode)",
         "rename.link": "Rename…", "rename.title": "Rename clips", "rename.hint": "Variables: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENAME", "rename.cancel": "CANCEL",
         "export.shotlist": "Shotlist (CSV)", "export.stills": "Marker stills",
         "filter.res": "Resolution", "filter.res.all": "All resolutions", "filter.fps": "Frame rate", "filter.fps.all": "All frame rates",
@@ -41,6 +45,8 @@ enum ConvertStrings {
         "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
     ]
     static let es: [String: String] = [
+        "conv.assemble": "Unir todos los clips en un solo archivo", "conv.assembly.name": "Ensamblaje de %d clips", "conv.assembly.suffix": "ensamblaje",
+        "codec.rewrap": "Rewrap (sin recodificar)",
         "rename.link": "Renombrar…", "rename.title": "Renombrar clips", "rename.hint": "Variables: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENOMBRAR", "rename.cancel": "CANCELAR",
         "export.shotlist": "Shotlist (CSV)", "export.stills": "Imágenes de marcadores",
         "filter.res": "Resolución", "filter.res.all": "Todas las resoluciones", "filter.fps": "Velocidad", "filter.fps.all": "Todas las velocidades",
@@ -61,6 +67,8 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
     ]
     static let it: [String: String] = [
+        "conv.assemble": "Unisci tutti i clip in un solo file", "conv.assembly.name": "Assemblaggio di %d clip", "conv.assembly.suffix": "assemblaggio",
+        "codec.rewrap": "Rewrap (senza ricodifica)",
         "rename.link": "Rinomina…", "rename.title": "Rinomina i clip", "rename.hint": "Variabili: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RINOMINA", "rename.cancel": "ANNULLA",
         "export.shotlist": "Shotlist (CSV)", "export.stills": "Immagini dei marker",
         "filter.res": "Risoluzione", "filter.res.all": "Tutte le risoluzioni", "filter.fps": "Frequenza", "filter.fps.all": "Tutte le frequenze",

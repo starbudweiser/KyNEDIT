@@ -24,6 +24,7 @@ struct ExportJob: Identifiable, Codable, Equatable, Sendable {
     var clipName: String?
     var batch: UUID?
     var relDir: String?
+    var parts: [AssemblyPart]?   // assemblage : plusieurs clips dans un seul fichier
 
     var label: String { convert?.codec.label ?? preset.label }
     var proResClass: Bool { convert?.isProResClass ?? preset.isProRes }
@@ -123,7 +124,10 @@ final class ExportQueue {
         let id = job.id
         let canceller: () -> Void
         let runner: (@escaping @Sendable (Double) -> Void) async throws -> Double
-        if let c = job.convert {
+        if let c = job.convert, let parts = job.parts, !parts.isEmpty {
+            let t = SegmentedTranscoder(segments: Self.assemblySegments(parts, c), output: out, parallel: 1, wrap: c.wrap)
+            canceller = { t.cancel() }; runner = { try await t.run(progress: $0) }
+        } else if let c = job.convert {
             let t = ConvertTranscoder(path: job.path, tin: job.tin, tout: job.tout, settings: c, meta: job.meta ?? SourceMeta(), clipName: job.clipName ?? ((job.path as NSString).lastPathComponent as NSString).deletingPathExtension, output: out)
             canceller = { t.cancel() }; runner = { try await t.run(progress: $0) }
         } else {
@@ -157,6 +161,21 @@ final class ExportQueue {
         save(); pump()
     }
 
+    /// Réglages communs à toutes les parties d'un assemblage : même taille, même cadence, audio homogène.
+    private static func assemblySegments(_ parts: [AssemblyPart], _ c: ConvertSettings) -> [SegmentedTranscoder.Segment] {
+        var st = c
+        let first = parts[0].meta
+        let same = parts.allSatisfy { $0.meta.width == first.width && $0.meta.height == first.height && abs($0.meta.fps - first.fps) < 0.01 }
+        if !same || c.width > 0 {
+            if st.width == 0 { st.width = first.width; st.height = first.height }
+            st.pad = true
+            if st.fps == 0 { st.fps = first.fps }
+        }
+        if st.audio != .none { st.audio = .first; st.channels = .stereo }
+        st.burn = c.burn
+        return parts.map { SegmentedTranscoder.Segment(part: $0, settings: st) }
+    }
+
     /// Quand toutes les tâches d'un lot « Convertir » sont terminées et que l'ALE est demandé : écrit le fichier Avid Log Exchange.
     private func writeALEIfComplete(_ batch: UUID) {
         let group = jobs.filter { $0.batch == batch }
@@ -188,6 +207,14 @@ final class ExportQueue {
             }
             if subs.isEmpty { made.append(job(clip.name, tin: nil, tout: nil, suffix: "")) }
             else { for s in subs { made.append(job("\(clip.name) · \(s.name)", tin: s.tin, tout: s.tout, suffix: "_" + s.name.replacingOccurrences(of: " ", with: ""))) } }
+        }
+        if settings.assemble, made.count > 1 {   // un seul travail pour tous les clips
+            var j = made[0]
+            j.name = String(format: L("conv.assembly.name"), made.count)
+            j.suffix = "_" + L("conv.assembly.suffix")
+            j.tin = nil; j.tout = nil
+            j.parts = made.map { AssemblyPart(path: $0.path, tin: $0.tin, tout: $0.tout, meta: $0.meta ?? SourceMeta(), clipName: $0.clipName ?? "") }
+            made = [j]
         }
         jobs += made; save(); pump()
     }

@@ -111,7 +111,10 @@ final class ConvertTranscoder: @unchecked Sendable {
             guard s.codec.dnxhdRate(fps: outFps) != nil else { throw ExportError(message: "DNxHD 1080p n'existe pas à cette cadence.") }
         }
         do {
-            if s.codec.isDNx {
+            if s.codec == .rewrap {
+                try runRewrap(src: src, span: span, part: part, progress: progress)
+                try move(part)
+            } else if s.codec.isDNx {
                 let direct = src.raw == nil && s.colorIn == .none && s.lutPath == nil && s.burn.isEmpty && s.logoPath == nil
                 try runFFmpeg(src: src, ow: ow, oh: oh, outFps: outFps, span: span, direct: direct, part: part, progress: progress)
                 if s.wrap == .mxfAtom { try finalizeAtom(part: part) } else { try move(part) }
@@ -670,6 +673,30 @@ extension ConvertTranscoder {
         return url
     }
 
+    /// Rewrap : les flux sont copiés tels quels dans un nouveau conteneur (très rapide, sans perte). Les sous-clips sont coupés à l'image clé précédente.
+    fileprivate func runRewrap(src: Source, span: Double, part: URL, progress: @escaping @Sendable (Double) -> Void) throws {
+        guard src.raw == nil else { throw ExportError(message: L("export.raw")) }
+        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: "Le rewrap demande ffmpeg (introuvable).") }
+        var a = ["-hide_banner", "-y", "-loglevel", "error", "-nostdin", "-progress", "pipe:1"]
+        if src.start > 0 { a += ["-ss", String(format: "%.6f", src.start)] }
+        a += ["-i", path, "-t", String(format: "%.6f", span), "-map", "0:v:0"]
+        if s.audio != .none { a += ["-map", s.audio == .first ? "0:a:0?" : "0:a?"] }
+        a += ["-c", "copy", "-map_metadata", "0", "-f", s.wrap == .mp4 ? "mp4" : s.wrap == .mxf ? "mxf" : "mov"]
+        if s.wrap != .mp4 { a += ["-timecode", Timecode.string(frames: meta.startFrames + Int((src.start * Double(meta.tcFps)).rounded()), fps: meta.tcFps)] }
+        a.append(part.path)
+        let p = Process(); p.executableURL = ff; p.arguments = a
+        let out = Pipe(); p.standardOutput = out; p.standardError = FileHandle.nullDevice; p.standardInput = FileHandle.nullDevice
+        out.fileHandleForReading.readabilityHandler = { h in
+            guard let t = String(data: h.availableData, encoding: .utf8) else { return }
+            for l in t.split(separator: "\n") where l.hasPrefix("out_time_us=") { if let us = Double(l.dropFirst(12)) { progress(min(0.999, us / 1e6 / span)) } }
+        }
+        proc = p
+        try p.run(); p.waitUntilExit()
+        out.fileHandleForReading.readabilityHandler = nil
+        if isCancelled { throw ExportError(message: "Annulé.") }
+        if p.terminationStatus != 0 { throw ExportError(message: "Rewrap impossible : ce conteneur n'accepte pas ces flux.") }
+    }
+
     fileprivate func outputScale(_ src: Source, _ ow: Int, _ oh: Int) -> Double {
         s.width == 0 ? 1 : min(1, min(Double(s.width) / Double(src.width), Double(s.height) / Double(src.height)))
     }
@@ -696,12 +723,14 @@ enum HeadlessConvert {
             if let l = env["KYNEDIT_LUT"] { st.lutPath = l }
             if let f = env["KYNEDIT_CONVERT_FPS"], let v = Double(f) { st.fps = v }
             if env["KYNEDIT_CONVERT_BURN"] != nil { st.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)] }
-            let url = URL(fileURLWithPath: inPath)
-            let clip = Clip(path: inPath, name: url.lastPathComponent, ext: url.pathExtension.lowercased(), size: 0, mtime: 0, kind: .video)
+            if env["KYNEDIT_ASSEMBLE"] != nil { st.assemble = true }
+            let urls = inPath.split(separator: ":").map { URL(fileURLWithPath: String($0)) }
+            let url = urls[0]
+            let list = urls.map { Clip(path: $0.path, name: $0.lastPathComponent, ext: $0.pathExtension.lowercased(), size: 0, mtime: 0, kind: .video) }
             let q = ExportQueue()
             q.jobs.removeAll()
             let t0 = Date()
-            await q.addConvert(clips: [clip], settings: st, outputDir: outDir, root: url.deletingLastPathComponent().path, subclips: { _ in [] })
+            await q.addConvert(clips: list, settings: st, outputDir: outDir, root: url.deletingLastPathComponent().path, subclips: { _ in [] })
             while q.pendingCount > 0 { try? await Task.sleep(for: .milliseconds(200)) }
             for j in q.jobs { log("\(id) : \(j.state.rawValue) \(String(format: "%.2f", Date().timeIntervalSince(t0))) s \(j.error ?? "") \(j.outputPath ?? "")") }
             exit(0)

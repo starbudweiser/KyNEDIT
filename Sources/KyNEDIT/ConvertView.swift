@@ -234,6 +234,7 @@ struct ConvertView: View {
                 }
                 check(L("conv.recreate"), s.recreateFolders)
                 check(L("conv.ale"), s.ale)
+                check(L("conv.assemble"), s.assemble)
 
                 VStack(alignment: .leading, spacing: 8) {
                     TextField(L("conv.preset.name"), text: Binding(get: { m.newName }, set: { m.newName = $0 })).textFieldStyle(.plain).padding(6)
