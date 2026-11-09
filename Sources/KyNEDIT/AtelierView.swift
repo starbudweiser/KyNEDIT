@@ -249,8 +249,13 @@ struct AtelierView: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text(title).font(.system(size: 12, weight: .semibold)).tracking(title.count > 2 ? 0.5 : 0).lineLimit(1).fixedSize()
-                if let key { Text(key).font(.system(size: 10, weight: .semibold)).padding(.horizontal, 5).frame(height: 16)
-                    .background((main ? Color.black : Color.white).opacity(0.15), in: RoundedRectangle(cornerRadius: 3)) }
+                if let key {
+                    HStack(spacing: 2) {
+                        if key.hasPrefix("⇧") { Image(systemName: "shift").font(.system(size: 9, weight: .bold)) }
+                        Text(key.hasPrefix("⇧") ? String(key.dropFirst()) : key).font(.system(size: 10, weight: .semibold))
+                    }.padding(.horizontal, 5).frame(height: 16)
+                    .background((main ? Color.black : Color.white).opacity(0.15), in: RoundedRectangle(cornerRadius: 3))
+                }
             }
             .padding(.horizontal, 12).frame(height: 32)
             .background(main ? Socle.action : Socle.control, in: RoundedRectangle(cornerRadius: 5))
@@ -279,6 +284,9 @@ struct AtelierView: View {
                 if !m.items.isEmpty { SLink(title: L("conv.clear")) { m.items = [] } }
             }.padding(.horizontal, UI.gutter).frame(height: 36)
             Divider().overlay(Socle.border)
+            if m.items.isEmpty {
+                Text(L("atelier.listempty")).font(.system(size: 12)).foregroundColor(Socle.subtle).multilineTextAlignment(.center).padding(UI.gutter).frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(m.items) { it in
@@ -298,9 +306,9 @@ struct AtelierView: View {
                 SCheck(title: L("atelier.replace"), isOn: Binding(get: { m.replaceOriginals }, set: { m.replaceOriginals = $0 }))
                 if m.replaceOriginals { Text(L("atelier.replace.note")).font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)).fixedSize(horizontal: false, vertical: true) }
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, UI.gutter).padding(.top, 10)
-            HStack(spacing: 8) {
-                Text(L("atelier.lossless")).font(.system(size: 11)).foregroundColor(Socle.subtle).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
-                tool(L("atelier.exportall", m.items.count), key: "⇧⌘S", main: !m.items.isEmpty) { m.exportAll() }
+            VStack(alignment: .leading, spacing: 10) {
+                Text(L("atelier.lossless")).font(.system(size: 11)).foregroundColor(Socle.subtle).fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+                tool(L("atelier.exportall", m.items.count), key: "⇧⌘S", main: !m.items.isEmpty) { m.exportAll() }.frame(maxWidth: .infinity, alignment: .trailing)
             }.padding(UI.gutter)
         }.background(Socle.surface)
     }
