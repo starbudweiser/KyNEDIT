@@ -190,6 +190,7 @@ final class ConvertTranscoder: @unchecked Sendable {
         var vOut: AVAssetReaderTrackOutput?
         var audio: [(AVAssetReaderTrackOutput, AVAssetWriterInput)] = []
         var rdr: AVAssetReader?
+        let group = DispatchGroup()
         if let asset = src.asset, let vt = src.vTrack {
             let r = try AVAssetReader(asset: asset)
             r.timeRange = CMTimeRange(start: CMTime(seconds: src.start, preferredTimescale: 6000), end: CMTime(seconds: src.end, preferredTimescale: 6000))
@@ -213,11 +214,22 @@ final class ConvertTranscoder: @unchecked Sendable {
             }
             self.reader = r; rdr = r
         }
+        // Audio RAW : PCM du SDK (BRAWAudioJob), écrit tel quel (canaux et fréquence d'origine).
+        var rawAudio: BRAWAudioJob?
+        if let raw = src.raw, s.audio != .none, let a = raw.audio {
+            var wo = audioOutputSettings(); wo[AVNumberOfChannelsKey] = a.channels; wo[AVSampleRateKey] = a.rate
+            let ai = AVAssetWriterInput(mediaType: .audio, outputSettings: wo)
+            ai.expectsMediaDataInRealTime = false
+            if writer.canAdd(ai) {
+                writer.add(ai)
+                rawAudio = BRAWAudioJob(clip: raw, input: ai, from: Int(src.start * Double(a.rate)), to: Int(src.end * Double(a.rate)))
+            }
+        }
         guard writer.startWriting() else { throw writer.error ?? ExportError(message: "Écriture impossible.") }
-        writer.startSession(atSourceTime: CMTime(seconds: src.start, preferredTimescale: 6000))
+        writer.startSession(atSourceTime: src.raw == nil ? CMTime(seconds: src.start, preferredTimescale: 6000) : .zero)
+        if let rawAudio { group.enter(); Task.detached { await rawAudio.run(); group.leave() } }
         if let rdr { guard rdr.startReading() else { throw rdr.error ?? ExportError(message: "Lecture impossible.") } }
 
-        let group = DispatchGroup()
         // Audio : une file par piste.
         for (i, (ao, ai)) in audio.enumerated() {
             group.enter()
@@ -476,7 +488,7 @@ extension ConvertTranscoder {
             }
         }
 
-        let startT = CMTime(seconds: src.start, preferredTimescale: 6000)
+        let startT = src.raw == nil ? CMTime(seconds: src.start, preferredTimescale: 6000) : CMTime.zero
         var cur = nextFrame()
         if s.fps == 0 {
             while let f = cur, failure == nil, !isCancelled {
@@ -516,15 +528,21 @@ extension ConvertTranscoder {
         let tcStart = meta.startFrames + Int((src.start * Double(meta.tcFps)).rounded())
         var a: [String] = ["-hide_banner", "-y", "-loglevel", "error", "-nostdin"]
         let sixteen = s.codec.tenBit
+        var rawAudioFile: URL?
+        defer { if let rawAudioFile { try? FileManager.default.removeItem(at: rawAudioFile) } }
         if direct {
             if src.start > 0 { a += ["-ss", String(format: "%.6f", src.start)] }
             a += ["-hwaccel", "videotoolbox", "-i", path]
         } else {
             a += ["-f", "rawvideo", "-pix_fmt", sixteen && s.codec != .dnxhr444 ? "p210le" : "bgra", "-s", "\(ow)x\(oh)", "-framerate", "\(num)/\(den)", "-i", "pipe:0"]
-            if s.audio != .none { if src.start > 0 { a += ["-ss", String(format: "%.6f", src.start)] }; a += ["-i", path] }
+            if s.audio != .none {
+                if let raw = src.raw {   // RAW : le SDK fournit le PCM, déposé dans un fichier temporaire lu par ffmpeg
+                    if let a1 = raw.audio, let f = dumpRawAudio(raw, a1, from: src.start, to: src.end) { rawAudioFile = f; a += ["-f", "s16le", "-ar", "\(a1.rate)", "-ac", "\(a1.channels)", "-i", f.path] }
+                } else { if src.start > 0 { a += ["-ss", String(format: "%.6f", src.start)] }; a += ["-i", path] }
+            }
         }
         let aIn = direct ? 0 : 1
-        let hasAudio = s.audio != .none
+        let hasAudio = s.audio != .none && (src.raw == nil || rawAudioFile != nil)
         // vidéo
         var v: [String] = ["-map", "0:v:0"]
         if direct {
@@ -631,6 +649,25 @@ extension ConvertTranscoder {
             let log = (try? String(contentsOf: errFile, encoding: .utf8)) ?? ""
             throw ExportError(message: "ffmpeg a échoué : " + log.split(separator: "\n").suffix(2).joined(separator: " "))
         }
+    }
+
+    /// PCM 16 bits entrelacé d'un clip RAW, écrit dans un fichier temporaire.
+    fileprivate func dumpRawAudio(_ raw: RawDecoder, _ a: (channels: Int, rate: Int, bits: Int, samples: Int), from: Double, to: Double) -> URL? {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("kynedit-raw-\(UUID().uuidString).pcm")
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+        guard let h = try? FileHandle(forWritingTo: url) else { return nil }
+        defer { try? h.close() }
+        var pos = Int(from * Double(a.rate)); let end = min(Int(to * Double(a.rate)), a.samples)
+        let bps = a.bits / 8
+        while pos < end, !isCancelled {
+            guard let d = raw.readAudio(from: pos, maxSamples: min(16384, end - pos)) else { break }
+            let count = d.count / bps
+            var out = Data(count: count * 2)
+            d.withUnsafeBytes { p in out.withUnsafeMutableBytes { o in for i in 0..<count { o[i * 2] = p[i * bps + bps - 2]; o[i * 2 + 1] = p[i * bps + bps - 1] } } }
+            try? h.write(contentsOf: out)
+            pos += count / a.channels
+        }
+        return url
     }
 
     fileprivate func outputScale(_ src: Source, _ ow: Int, _ oh: Int) -> Double {
