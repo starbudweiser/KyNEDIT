@@ -207,6 +207,15 @@ final class AppModel {
                     if ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_LUT"] != nil { exports.useLUT = true }
                     for _ in 0..<(Int(ProcessInfo.processInfo.environment["KYNEDIT_EXPORT_N"] ?? "") ?? 1) { addExport(c) }
                 }
+                if let pid = ProcessInfo.processInfo.environment["KYNEDIT_CONVERT"], let pr = Presets.builtin.first(where: { $0.id == pid }) { // essai de conversion
+                    var st = pr.settings
+                    if let lut = ProcessInfo.processInfo.environment["KYNEDIT_LUT"] { st.lutPath = lut }
+                    if let f = ProcessInfo.processInfo.environment["KYNEDIT_CONVERT_FPS"], let v = Double(f) { st.fps = v }
+                    if ProcessInfo.processInfo.environment["KYNEDIT_CONVERT_BURN"] != nil { st.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)] }
+                    let out = ProcessInfo.processInfo.environment["KYNEDIT_OUT"] ?? exports.outputDir
+                    let list = ProcessInfo.processInfo.environment["KYNEDIT_MULTI"] != nil ? result.filter { selection.contains($0.path) } : [c]
+                    await exports.addConvert(clips: list, settings: st, outputDir: out, root: path, subclips: { _ in [] })
+                }
                 if let n = ProcessInfo.processInfo.environment["KYNEDIT_EXCHANGE"], let nle = NLE(rawValue: n) { // essai d'échange
                     if let d = ProcessInfo.processInfo.environment["KYNEDIT_OUT"] { exports.outputDir = d }
                     sendToNLE(nle)

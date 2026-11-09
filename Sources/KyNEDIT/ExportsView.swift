@@ -39,10 +39,10 @@ struct JobRow: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.name).font(.system(size: 12, weight: .semibold)).foregroundColor(Socle.textStrong).lineLimit(1)
-                Text(job.error ?? (job.outputPath.map { ($0 as NSString).lastPathComponent } ?? job.preset.label))
+                Text(job.error ?? (job.outputPath.map { ($0 as NSString).lastPathComponent } ?? job.label))
                     .font(.system(size: 11)).foregroundColor(job.state == .failed ? Color(hex: 0xF87171) : Socle.subtle).lineLimit(1).truncationMode(.middle)
             }.frame(maxWidth: .infinity, alignment: .leading)
-            Text(job.preset.label).font(.system(size: 11)).foregroundColor(Socle.muted).frame(width: 110, alignment: .leading)
+            Text(job.label).font(.system(size: 11)).foregroundColor(Socle.muted).frame(width: 110, alignment: .leading)
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 3).fill(Socle.control).frame(height: 5)
                 GeometryReader { g in RoundedRectangle(cornerRadius: 3).fill(job.state == .done ? Color(hex: 0x4ADE80) : Color(hex: 0x0EA5E9)).frame(width: g.size.width * job.progress, height: 5) }.frame(height: 5)

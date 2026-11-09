@@ -222,3 +222,19 @@ enum ALE {
         try out.write(to: url, atomically: true, encoding: .utf8)
     }
 }
+
+extension SourceMeta {
+    /// Lit les métadonnées d'un clip : timecode de départ, date, dimensions, cadence, codec.
+    static func load(_ clip: Clip) async -> SourceMeta {
+        var m = SourceMeta()
+        let url = URL(fileURLWithPath: clip.path)
+        m.reel = (url.deletingLastPathComponent().lastPathComponent)
+        if let d = (try? FileManager.default.attributesOfItem(atPath: clip.path))?[.creationDate] as? Date {
+            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; f.locale = Locale(identifier: "en_US_POSIX"); m.date = f.string(from: d)
+        }
+        if let i = await Prober.probe(clip) { m.width = i.width; m.height = i.height; m.fps = i.fps; m.codec = i.codec; m.duration = i.duration }
+        m.tcFps = max(1, Int((m.fps > 0 ? m.fps : 24).rounded()))
+        if !clip.isRaw, let tc = await Timecode.start(of: AVURLAsset(url: url)) { m.startFrames = tc.frames; m.tcFps = tc.fps }
+        return m
+    }
+}

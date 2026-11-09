@@ -3,6 +3,7 @@ import AppKit
 
 @main
 struct KyNEDITApp: App {
+    init() { HeadlessConvert.startIfRequested() }
     var body: some Scene {
         WindowGroup {
             ContentView()
