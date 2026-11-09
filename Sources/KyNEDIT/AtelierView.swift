@@ -79,6 +79,20 @@ final class AtelierModel {
         if index >= clips.count - 1 { player.markIn = nil; player.markOut = nil } else { go(1) }
     }
 
+    /// Ajoute tous les clips entiers (sans entrée ni sortie) à la liste ; ceux qui y figurent déjà sont ignorés.
+    func addAllWhole() {
+        guard let app else { return }
+        let todo = clips.filter { c in !items.contains { $0.clip == c } }
+        Task {
+            var n = 0
+            for c in todo {
+                guard let info = await app.thumbs.load(c).info, info.duration > 0 else { continue }
+                items.append(TrimItem(clip: c, tin: 0, tout: info.duration, fps: info.fps > 0 ? info.fps : 25)); n += 1
+            }
+            message = L("atelier.addedall", n)
+        }
+    }
+
     /// Exporte le clip courant tout de suite (⌘S).
     func exportNow() {
         guard let it = currentItem(), let app, confirmReplace([it]) else { return }
@@ -269,6 +283,7 @@ struct AtelierView: View {
         VStack(spacing: 0) {
             HStack { Text(L("atelier.clips").uppercased()).font(.system(size: 10.5)).tracking(0.8).foregroundColor(Socle.subtle); Spacer()
                 if !app.selection.isEmpty { SLink(title: L("atelier.addsel", app.selection.count)) { m.add(app.clips.filter { app.selection.contains($0.path) }) } }
+                if !m.clips.isEmpty { SLink(title: L("atelier.addall")) { m.addAllWhole() } }
             }.padding(.horizontal, UI.gutter).frame(height: 36)
             Divider().overlay(Socle.border)
             ScrollView {
