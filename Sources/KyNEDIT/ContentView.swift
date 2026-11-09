@@ -53,6 +53,13 @@ struct ContentView: View {
         }
         .background(Socle.bg)
         .onAppear { model.installKeyMonitor() }
+        .onAppear { // au lancement : fenêtre à taille raisonnable, centrée dans l'écran
+            DispatchQueue.main.async {
+                guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (w.screen ?? NSScreen.main)?.visibleFrame else { return }
+                let size = NSSize(width: min(1280, v.width * 0.85), height: min(820, v.height * 0.85))
+                w.setFrame(NSRect(x: v.midX - size.width / 2, y: v.midY - size.height / 2, width: size.width, height: size.height), display: true)
+            }
+        }
         .onAppear { Updater.shared.isBusy = { [exports = model.exports] in exports.pendingCount > 0 }; Updater.shared.tick() }
         .onReceive(updateTimer) { _ in Updater.shared.tick() }
         .onAppear { // ouverture automatique d'un dossier pour les essais (KYNEDIT_OPEN=/chemin)
