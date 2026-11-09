@@ -25,6 +25,7 @@ struct ExportJob: Identifiable, Codable, Equatable, Sendable {
     var batch: UUID?
     var relDir: String?
     var parts: [AssemblyPart]?   // assemblage : plusieurs clips dans un seul fichier
+    var replaceOriginal: Bool?   // élagage : le résultat remplace le fichier d'origine une fois écrit
 
     var label: String { convert?.codec.label ?? preset.label }
     var proResClass: Bool { convert?.isProResClass ?? preset.isProRes }
@@ -140,7 +141,11 @@ final class ExportQueue {
             let t0 = Date()
             do {
                 let secs = try await runner { p in Task { @MainActor in self.setProgress(id, p) } }
-                finish(id) { $0.state = .done; $0.progress = 1; $0.seconds = secs; $0.elapsed = Date().timeIntervalSince(t0) }
+                if job.replaceOriginal == true {   // le résultat prend la place de l'original (remplacement atomique)
+                    do { _ = try FileManager.default.replaceItemAt(URL(fileURLWithPath: job.path), withItemAt: out) }
+                    catch { try? FileManager.default.removeItem(at: out); throw ExportError(message: error.localizedDescription) }
+                }
+                finish(id) { $0.state = .done; $0.progress = 1; $0.seconds = secs; $0.elapsed = Date().timeIntervalSince(t0); if $0.replaceOriginal == true { $0.outputPath = $0.path } }
             } catch {
                 finish(id) {
                     $0.state = (error as? ExportError)?.message == L("err.cancelled") ? .cancelled : .failed
@@ -190,14 +195,16 @@ final class ExportQueue {
     }
 
     /// Passages élagués (atelier) : copie des flux sans réencodage, une tâche par passage.
-    func addTrims(_ items: [TrimItem], outputDir: String) async {
+    func addTrims(_ items: [TrimItem], outputDir: String, replace: Bool = false) async {
         var made: [ExportJob] = []
         for it in items {
-            var st = ConvertSettings(); st.codec = .rewrap; st.wrap = it.wrap; st.template = "{name}_trim"; st.audio = .all
+            let swap = replace && it.canReplace(in: items)
+            var st = ConvertSettings(); st.codec = .rewrap; st.wrap = it.wrap; st.template = swap ? "{name}.kyn-trim" : "{name}_trim"; st.audio = .all
             let meta = await SourceMeta.load(it.clip)
             var j = ExportJob(path: it.clip.path, name: "\(it.clip.name) · \(PlayerModel.shortTimecode(it.tin, fps: it.fps))→\(PlayerModel.shortTimecode(it.tout, fps: it.fps))", tin: it.tin, tout: it.tout,
-                              preset: .proRes422HQ, outputDir: outputDir, suffix: "", lutPath: nil)
+                              preset: .proRes422HQ, outputDir: swap ? (it.clip.path as NSString).deletingLastPathComponent : outputDir, suffix: "", lutPath: nil)
             j.convert = st; j.meta = meta; j.clipName = (it.clip.name as NSString).deletingPathExtension
+            if swap { j.replaceOriginal = true }
             made.append(j)
         }
         jobs += made; save(); pump()

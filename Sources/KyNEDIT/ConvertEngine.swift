@@ -706,6 +706,19 @@ extension ConvertTranscoder {
 enum HeadlessConvert {
     @MainActor static func startIfRequested() {
         let env = ProcessInfo.processInfo.environment
+        if let t = env["KYNEDIT_TRIM"], let resPath = env["KYNEDIT_RESULT"] {   // essai d'élagage : chemin|entrée|sortie|remplacer
+            let f = t.split(separator: "|").map(String.init)
+            Task { @MainActor in
+                let u = URL(fileURLWithPath: f[0])
+                let clip = Clip(path: u.path, name: u.lastPathComponent, ext: u.pathExtension.lowercased(), size: 0, mtime: 0, kind: .video)
+                let q = ExportQueue(); q.jobs.removeAll()
+                await q.addTrims([TrimItem(clip: clip, tin: Double(f[1]) ?? 0, tout: Double(f[2]) ?? 1, fps: 30)], outputDir: env["KYNEDIT_OUT"] ?? NSTemporaryDirectory(), replace: f.count > 3 && f[3] == "1")
+                while q.pendingCount > 0 { try? await Task.sleep(for: .milliseconds(200)) }
+                try? q.jobs.map { "\($0.state.rawValue) \($0.error ?? "") \($0.outputPath ?? "")" }.joined(separator: "\n").write(toFile: resPath, atomically: true, encoding: .utf8)
+                exit(0)
+            }
+            return
+        }
         if let src = env["KYNEDIT_OFFLOAD"], let outs = env["KYNEDIT_OUT"], let resPath = env["KYNEDIT_RESULT"] {   // essai de copie vérifiée
             Task { @MainActor in
                 let m = OffloadModel(); m.source = URL(fileURLWithPath: src); m.destinations = outs.split(separator: ":").map { URL(fileURLWithPath: String($0)) }

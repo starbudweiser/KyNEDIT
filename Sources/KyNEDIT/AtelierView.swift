@@ -11,6 +11,8 @@ struct TrimItem: Identifiable, Equatable {
     var fps: Double
     var wrap: Wrap { ["mp4", "m4v"].contains(clip.ext) ? .mp4 : clip.ext == "mxf" ? .mxf : .mov }
     var duration: Double { tout - tin }
+    /// Remplaçable seulement si le conteneur reste le même et si ce clip n'a qu'un passage dans le lot (sinon le 2e passage lirait un original déjà remplacé).
+    func canReplace(in items: [TrimItem]) -> Bool { ["mov", "mp4", "m4v", "mxf"].contains(clip.ext) && items.filter { $0.clip.path == clip.path }.count == 1 }
 }
 
 /// Atelier : lecteur grand format et outils rapides (élagage sans réencodage, image fixe, audio seul).
@@ -22,6 +24,7 @@ final class AtelierModel {
     var index = 0
     var items: [TrimItem] = []
     var message = ""
+    var replaceOriginals = false   // volontairement non mémorisé : toujours décoché au lancement
     @ObservationIgnored weak var app: AppModel?
 
     init(catalog: Catalog) { player = PlayerModel(catalog: catalog) }
@@ -78,18 +81,34 @@ final class AtelierModel {
 
     /// Exporte le clip courant tout de suite (⌘S).
     func exportNow() {
-        guard let it = currentItem(), let app else { return }
+        guard let it = currentItem(), let app, confirmReplace([it]) else { return }
         message = L("atelier.sent", 1)
-        Task { await app.exports.addTrims([it], outputDir: app.exports.outputDir) }
+        let rep = replaceOriginals
+        Task { await app.exports.addTrims([it], outputDir: app.exports.outputDir, replace: rep) }
         go(1)
     }
 
     /// Envoie toute la liste à l'export (⇧⌘S).
     func exportAll() {
-        guard !items.isEmpty, let app else { return }
+        guard !items.isEmpty, let app, confirmReplace(items) else { return }
         let list = items; items = []
         message = L("atelier.sent", list.count)
-        Task { await app.exports.addTrims(list, outputDir: app.exports.outputDir) }
+        let rep = replaceOriginals
+        Task { await app.exports.addTrims(list, outputDir: app.exports.outputDir, replace: rep) }
+    }
+
+    /// Étape de confirmation avant de remplacer des originaux : vrai si l'export peut continuer.
+    private func confirmReplace(_ list: [TrimItem]) -> Bool {
+        guard replaceOriginals else { return true }
+        let n = list.filter { $0.canReplace(in: list) }.count
+        guard n > 0 else { return true }
+        let a = NSAlert()
+        a.alertStyle = .critical
+        a.messageText = L("atelier.replace.title")
+        a.informativeText = L("atelier.replace.body", n)
+        a.addButton(withTitle: L("atelier.replace.ok"))
+        a.addButton(withTitle: L("rename.cancel").capitalized)
+        return a.runModal() == .alertFirstButtonReturn
     }
 
     /// Image fixe à la position de lecture, dans le dossier de sortie.
@@ -275,6 +294,10 @@ struct AtelierView: View {
                 }
             }.frame(maxHeight: .infinity)
             Divider().overlay(Socle.border)
+            VStack(alignment: .leading, spacing: 4) {
+                SCheck(title: L("atelier.replace"), isOn: Binding(get: { m.replaceOriginals }, set: { m.replaceOriginals = $0 }))
+                if m.replaceOriginals { Text(L("atelier.replace.note")).font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)).fixedSize(horizontal: false, vertical: true) }
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, UI.gutter).padding(.top, 10)
             HStack(spacing: 8) {
                 Text(L("atelier.lossless")).font(.system(size: 11)).foregroundColor(Socle.subtle).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
                 tool(L("atelier.exportall", m.items.count), key: "⇧⌘S", main: !m.items.isEmpty) { m.exportAll() }
