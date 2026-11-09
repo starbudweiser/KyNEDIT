@@ -8,6 +8,7 @@ final class AppModel {
     let player: PlayerModel
     let exports = ExportQueue()
     let convert = ConvertModel()
+    let offload = OffloadModel()
     var selected: Clip?
     var selection: Set<String> = []
     var selectedInfo: MediaInfo?

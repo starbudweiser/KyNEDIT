@@ -642,6 +642,16 @@ extension ConvertTranscoder {
 enum HeadlessConvert {
     @MainActor static func startIfRequested() {
         let env = ProcessInfo.processInfo.environment
+        if let src = env["KYNEDIT_OFFLOAD"], let outs = env["KYNEDIT_OUT"], let resPath = env["KYNEDIT_RESULT"] {   // essai de copie vérifiée
+            Task { @MainActor in
+                let m = OffloadModel(); m.source = URL(fileURLWithPath: src); m.destinations = outs.split(separator: ":").map { URL(fileURLWithPath: String($0)) }
+                m.run(); try? await Task.sleep(for: .milliseconds(300))
+                while m.running { try? await Task.sleep(for: .milliseconds(200)) }
+                try? ("\(m.done)/\(m.total) " + m.results.map { "\($0.file):\($0.ok):\($0.note)" }.joined(separator: ",")).write(toFile: resPath, atomically: true, encoding: .utf8)
+                exit(0)
+            }
+            return
+        }
         guard let id = env["KYNEDIT_HEADLESS"], let inPath = env["KYNEDIT_IN"], let outDir = env["KYNEDIT_OUT"], let resPath = env["KYNEDIT_RESULT"] else { return }
         Task { @MainActor in
             func log(_ m: String) { if let h = FileHandle(forWritingAtPath: resPath) { h.seekToEndOfFile(); h.write((m + "\n").data(using: .utf8)!); try? h.close() } else { try? (m + "\n").write(toFile: resPath, atomically: false, encoding: .utf8) } }

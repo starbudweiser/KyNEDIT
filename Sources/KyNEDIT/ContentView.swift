@@ -1,7 +1,7 @@
 import SwiftUI
 
-enum Tab: CaseIterable { case explorer, convert, exports, performance
-    var key: String { switch self { case .explorer: "tab.explorer"; case .convert: "tab.convert"; case .exports: "tab.exports"; case .performance: "tab.performance" } }
+enum Tab: CaseIterable { case explorer, convert, offload, exports, performance
+    var key: String { switch self { case .explorer: "tab.explorer"; case .convert: "tab.convert"; case .offload: "tab.offload"; case .exports: "tab.exports"; case .performance: "tab.performance" } }
 }
 
 struct ContentView: View {
@@ -30,6 +30,7 @@ struct ContentView: View {
             Divider().overlay(Socle.border)
             if tab == .performance { PerformanceView() }
             else if tab == .convert { ConvertView(app: model) }
+            else if tab == .offload { OffloadView(m: model.offload) }
             else if tab == .exports { ExportsView(queue: model.exports) }
             else { HStack(spacing: 0) {
                 Sidebar(model: model).frame(width: 200)
