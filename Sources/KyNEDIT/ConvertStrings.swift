@@ -1,0 +1,67 @@
+// Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
+enum ConvertStrings {
+    static let fr: [String: String] = [
+        "tab.convert": "Convertir", "conv.presets": "Préréglages", "conv.mine": "Mes préréglages", "conv.sources": "Sources",
+        "conv.add.selection": "AJOUTER LA SÉLECTION (%d)", "conv.drop": "Glissez des clips ou des dossiers ici, ou ajoutez la sélection de l'explorateur.", "conv.clear": "Vider la liste",
+        "conv.run": "CONVERTIR %d CLIP(S)", "conv.save": "ENREGISTRER LE PRÉRÉGLAGE", "conv.preset.name": "Nom du préréglage", "conv.delete": "Supprimer", "conv.queued": "%d tâche(s) ajoutée(s) à la file.",
+        "group.edit": "Montage (ProRes)", "group.proxy": "Proxys", "group.avid": "Avid (DNxHR, DNxHD)", "group.delivery": "Diffusion", "group.dailies": "Rushes", "group.camera": "Caméras (log → Rec.709)",
+        "w.dailies": "Rushes", "w.square": "carré", "w.vertical": "vertical", "w.preview": "aperçu léger", "w.timecode": "timecode", "w.reel": "bobine", "w.name": "nom", "w.social": "réseaux sociaux",
+        "conv.format": "Format", "conv.codec": "Codec", "conv.wrap": "Conteneur", "conv.size": "Taille", "conv.size.source": "Taille d'origine", "conv.fps": "Cadence", "conv.fps.source": "Cadence d'origine", "conv.pad": "Bandes noires pour remplir l'image",
+        "conv.dnxhd.note": "DNxHD : 1080p uniquement, cadences de 23,976 à 60 i/s.",
+        "conv.color": "Couleur", "conv.color.in": "Log → Rec.709", "conv.lut": "LUT", "conv.lut.choose": "Choisir…", "conv.lut.none": "Aucun",
+        "conv.audio": "Audio", "conv.audio.all": "Toutes les pistes", "conv.audio.first": "Première piste", "conv.audio.none": "Sans audio", "conv.ch.keep": "Canaux d'origine", "conv.ch.stereo": "Stéréo", "conv.ch.mono": "Mono",
+        "conv.burn": "Incrustations", "conv.burn.add": "Ajouter une incrustation", "conv.text": "Texte libre", "conv.fontsize": "Taille du texte (%)", "conv.logo": "Logo PNG", "conv.logo.size": "Largeur (%)", "conv.logo.opacity": "Opacité (%)",
+        "field.timecode": "Timecode", "field.reel": "Bobine", "field.clipName": "Nom du clip", "field.date": "Date", "field.custom": "Texte libre",
+        "pos.tl": "Haut gauche", "pos.tc": "Haut centre", "pos.tr": "Haut droite", "pos.bl": "Bas gauche", "pos.bc": "Bas centre", "pos.br": "Bas droite",
+        "conv.output": "Sortie", "conv.template": "Nom du fichier", "conv.template.hint": "Variables : {name} {reel} {date} {codec} {res} {fps} {tc}", "conv.folder": "Dossier", "conv.recreate": "Recréer l'arborescence des dossiers sources", "conv.ale": "Exporter un fichier ALE (Avid)",
+        "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
+    ]
+    static let en: [String: String] = [
+        "tab.convert": "Convert", "conv.presets": "Presets", "conv.mine": "My presets", "conv.sources": "Sources",
+        "conv.add.selection": "ADD SELECTION (%d)", "conv.drop": "Drop clips or folders here, or add the Explorer selection.", "conv.clear": "Clear list",
+        "conv.run": "CONVERT %d CLIP(S)", "conv.save": "SAVE PRESET", "conv.preset.name": "Preset name", "conv.delete": "Delete", "conv.queued": "%d job(s) added to the queue.",
+        "group.edit": "Editing (ProRes)", "group.proxy": "Proxies", "group.avid": "Avid (DNxHR, DNxHD)", "group.delivery": "Delivery", "group.dailies": "Dailies", "group.camera": "Cameras (log → Rec.709)",
+        "w.dailies": "Dailies", "w.square": "square", "w.vertical": "vertical", "w.preview": "light preview", "w.timecode": "timecode", "w.reel": "reel", "w.name": "name", "w.social": "social media",
+        "conv.format": "Format", "conv.codec": "Codec", "conv.wrap": "Wrapper", "conv.size": "Size", "conv.size.source": "Source size", "conv.fps": "Frame rate", "conv.fps.source": "Source frame rate", "conv.pad": "Black bars to fill the frame",
+        "conv.dnxhd.note": "DNxHD: 1080p only, frame rates from 23.976 to 60 fps.",
+        "conv.color": "Color", "conv.color.in": "Log → Rec.709", "conv.lut": "LUT", "conv.lut.choose": "Choose…", "conv.lut.none": "None",
+        "conv.audio": "Audio", "conv.audio.all": "All tracks", "conv.audio.first": "First track", "conv.audio.none": "No audio", "conv.ch.keep": "Source channels", "conv.ch.stereo": "Stereo", "conv.ch.mono": "Mono",
+        "conv.burn": "Burn-ins", "conv.burn.add": "Add a burn-in", "conv.text": "Custom text", "conv.fontsize": "Text size (%)", "conv.logo": "PNG logo", "conv.logo.size": "Width (%)", "conv.logo.opacity": "Opacity (%)",
+        "field.timecode": "Timecode", "field.reel": "Reel", "field.clipName": "Clip name", "field.date": "Date", "field.custom": "Custom text",
+        "pos.tl": "Top left", "pos.tc": "Top center", "pos.tr": "Top right", "pos.bl": "Bottom left", "pos.bc": "Bottom center", "pos.br": "Bottom right",
+        "conv.output": "Output", "conv.template": "File name", "conv.template.hint": "Variables: {name} {reel} {date} {codec} {res} {fps} {tc}", "conv.folder": "Folder", "conv.recreate": "Recreate the source folder structure", "conv.ale": "Export an ALE file (Avid)",
+        "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
+    ]
+    static let es: [String: String] = [
+        "tab.convert": "Convertir", "conv.presets": "Preajustes", "conv.mine": "Mis preajustes", "conv.sources": "Fuentes",
+        "conv.add.selection": "AÑADIR SELECCIÓN (%d)", "conv.drop": "Suelte clips o carpetas aquí, o añada la selección del Explorador.", "conv.clear": "Vaciar la lista",
+        "conv.run": "CONVERTIR %d CLIP(S)", "conv.save": "GUARDAR PREAJUSTE", "conv.preset.name": "Nombre del preajuste", "conv.delete": "Eliminar", "conv.queued": "%d tarea(s) añadida(s) a la cola.",
+        "group.edit": "Edición (ProRes)", "group.proxy": "Proxies", "group.avid": "Avid (DNxHR, DNxHD)", "group.delivery": "Entrega", "group.dailies": "Rushes", "group.camera": "Cámaras (log → Rec.709)",
+        "w.dailies": "Rushes", "w.square": "cuadrado", "w.vertical": "vertical", "w.preview": "vista previa ligera", "w.timecode": "código de tiempo", "w.reel": "bobina", "w.name": "nombre", "w.social": "redes sociales",
+        "conv.format": "Formato", "conv.codec": "Códec", "conv.wrap": "Contenedor", "conv.size": "Tamaño", "conv.size.source": "Tamaño original", "conv.fps": "Velocidad", "conv.fps.source": "Velocidad original", "conv.pad": "Bandas negras para rellenar la imagen",
+        "conv.dnxhd.note": "DNxHD: solo 1080p, de 23,976 a 60 i/s.",
+        "conv.color": "Color", "conv.color.in": "Log → Rec.709", "conv.lut": "LUT", "conv.lut.choose": "Elegir…", "conv.lut.none": "Ninguno",
+        "conv.audio": "Audio", "conv.audio.all": "Todas las pistas", "conv.audio.first": "Primera pista", "conv.audio.none": "Sin audio", "conv.ch.keep": "Canales de origen", "conv.ch.stereo": "Estéreo", "conv.ch.mono": "Mono",
+        "conv.burn": "Superposiciones", "conv.burn.add": "Añadir superposición", "conv.text": "Texto libre", "conv.fontsize": "Tamaño del texto (%)", "conv.logo": "Logo PNG", "conv.logo.size": "Anchura (%)", "conv.logo.opacity": "Opacidad (%)",
+        "field.timecode": "Código de tiempo", "field.reel": "Bobina", "field.clipName": "Nombre del clip", "field.date": "Fecha", "field.custom": "Texto libre",
+        "pos.tl": "Arriba izquierda", "pos.tc": "Arriba centro", "pos.tr": "Arriba derecha", "pos.bl": "Abajo izquierda", "pos.bc": "Abajo centro", "pos.br": "Abajo derecha",
+        "conv.output": "Salida", "conv.template": "Nombre del archivo", "conv.template.hint": "Variables: {name} {reel} {date} {codec} {res} {fps} {tc}", "conv.folder": "Carpeta", "conv.recreate": "Recrear la estructura de carpetas de origen", "conv.ale": "Exportar un archivo ALE (Avid)",
+        "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
+    ]
+    static let it: [String: String] = [
+        "tab.convert": "Converti", "conv.presets": "Preset", "conv.mine": "I miei preset", "conv.sources": "Sorgenti",
+        "conv.add.selection": "AGGIUNGI SELEZIONE (%d)", "conv.drop": "Trascina qui clip o cartelle, oppure aggiungi la selezione di Esplora.", "conv.clear": "Svuota l'elenco",
+        "conv.run": "CONVERTI %d CLIP", "conv.save": "SALVA IL PRESET", "conv.preset.name": "Nome del preset", "conv.delete": "Elimina", "conv.queued": "%d attività aggiunte alla coda.",
+        "group.edit": "Montaggio (ProRes)", "group.proxy": "Proxy", "group.avid": "Avid (DNxHR, DNxHD)", "group.delivery": "Consegna", "group.dailies": "Dailies", "group.camera": "Camere (log → Rec.709)",
+        "w.dailies": "Dailies", "w.square": "quadrato", "w.vertical": "verticale", "w.preview": "anteprima leggera", "w.timecode": "timecode", "w.reel": "bobina", "w.name": "nome", "w.social": "social",
+        "conv.format": "Formato", "conv.codec": "Codec", "conv.wrap": "Contenitore", "conv.size": "Dimensione", "conv.size.source": "Dimensione originale", "conv.fps": "Frequenza", "conv.fps.source": "Frequenza originale", "conv.pad": "Bande nere per riempire l'immagine",
+        "conv.dnxhd.note": "DNxHD: solo 1080p, da 23,976 a 60 f/s.",
+        "conv.color": "Colore", "conv.color.in": "Log → Rec.709", "conv.lut": "LUT", "conv.lut.choose": "Scegli…", "conv.lut.none": "Nessuno",
+        "conv.audio": "Audio", "conv.audio.all": "Tutte le tracce", "conv.audio.first": "Prima traccia", "conv.audio.none": "Senza audio", "conv.ch.keep": "Canali originali", "conv.ch.stereo": "Stereo", "conv.ch.mono": "Mono",
+        "conv.burn": "Sovrimpressioni", "conv.burn.add": "Aggiungi sovrimpressione", "conv.text": "Testo libero", "conv.fontsize": "Dimensione del testo (%)", "conv.logo": "Logo PNG", "conv.logo.size": "Larghezza (%)", "conv.logo.opacity": "Opacità (%)",
+        "field.timecode": "Timecode", "field.reel": "Bobina", "field.clipName": "Nome del clip", "field.date": "Data", "field.custom": "Testo libero",
+        "pos.tl": "In alto a sinistra", "pos.tc": "In alto al centro", "pos.tr": "In alto a destra", "pos.bl": "In basso a sinistra", "pos.bc": "In basso al centro", "pos.br": "In basso a destra",
+        "conv.output": "Uscita", "conv.template": "Nome del file", "conv.template.hint": "Variabili: {name} {reel} {date} {codec} {res} {fps} {tc}", "conv.folder": "Cartella", "conv.recreate": "Ricrea la struttura delle cartelle di origine", "conv.ale": "Esporta un file ALE (Avid)",
+        "conv.raw.note": "Clip RAW: solo immagine, senza audio.", "conv.hint.fast": "Senza modifiche all'immagine, la conversione passa direttamente dal decodificatore all'encoder hardware."
+    ]
+}

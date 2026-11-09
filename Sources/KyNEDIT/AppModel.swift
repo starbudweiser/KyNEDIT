@@ -7,6 +7,7 @@ final class AppModel {
     let thumbs: ThumbService
     let player: PlayerModel
     let exports = ExportQueue()
+    let convert = ConvertModel()
     var selected: Clip?
     var selection: Set<String> = []
     var selectedInfo: MediaInfo?

@@ -3,7 +3,7 @@ import AppKit
 
 @main
 struct KyNEDITApp: App {
-    init() { HeadlessConvert.startIfRequested() }
+    init() { HeadlessConvert.startIfRequested(); Snapshot.startIfRequested() }
     var body: some Scene {
         WindowGroup {
             ContentView()

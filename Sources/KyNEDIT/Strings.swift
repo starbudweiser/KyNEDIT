@@ -1,6 +1,8 @@
 // Mêmes clés dans les 4 langues (français rédigé en premier).
 enum Strings {
-    static let table: [String: [String: String]] = ["fr": fr, "en": en, "es": es, "it": it]
+    static let table: [String: [String: String]] = [
+        "fr": fr.merging(ConvertStrings.fr) { a, _ in a }, "en": en.merging(ConvertStrings.en) { a, _ in a },
+        "es": es.merging(ConvertStrings.es) { a, _ in a }, "it": it.merging(ConvertStrings.it) { a, _ in a }]
 
     static let fr: [String: String] = [
         "upd.title": "Mises à jour", "upd.auto": "Installer automatiquement les mises à jour", "upd.check": "Rechercher une mise à jour", "upd.install": "Installer la version %@", "upd.version": "Version installée : %@", "upd.checking": "Recherche en cours…", "upd.uptodate": "kYNEDIT est à jour (version %@).", "upd.available": "La version %@ est disponible.", "upd.downloading": "Téléchargement et installation… l'application va redémarrer.", "upd.failed": "Échec de la mise à jour : %@", "upd.busy": "Un export est en cours : l'installation attendra sa fin.", "upd.err.none": "Aucune version publiée.", "upd.err.download": "Téléchargement impossible.", "upd.err.signature": "Signature de la mise à jour invalide.", "upd.err.version": "La mise à jour n'est pas plus récente que la version installée.", "settings.menu": "Réglages…",

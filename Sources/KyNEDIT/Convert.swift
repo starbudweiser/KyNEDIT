@@ -120,11 +120,11 @@ enum Presets {
         p.append(mk("edit.prores422hq.uhd", "ProRes 422 HQ · UHD", g1, .proRes422HQ) { size(&$0, 3840, 2160) })
         // Proxys
         p.append(mk("proxy.prores.hd", "ProRes Proxy · 1080p", g2, .proRes422Proxy) { size(&$0, 1920, 1080); $0.template = "{name}_proxy" })
-        p.append(mk("proxy.prores.hd.tc", "ProRes Proxy · 1080p + timecode", g2, .proRes422Proxy) { size(&$0, 1920, 1080); $0.burn = [BurnItem(field: .timecode, pos: .bl)]; $0.template = "{name}_proxy" })
+        p.append(mk("proxy.prores.hd.tc", "ProRes Proxy · 1080p + \(L("w.timecode"))", g2, .proRes422Proxy) { size(&$0, 1920, 1080); $0.burn = [BurnItem(field: .timecode, pos: .bl)]; $0.template = "{name}_proxy" })
         p.append(mk("proxy.prores.720", "ProRes Proxy · 720p", g2, .proRes422Proxy) { size(&$0, 1280, 720); $0.template = "{name}_proxy" })
         p.append(mk("proxy.dnx.lb", "DNxHR LB · 1080p", g2, .dnxhrLB) { size(&$0, 1920, 1080); $0.template = "{name}_proxy" })
         p.append(mk("proxy.h264.720", "H.264 proxy · 720p", g2, .h264) { size(&$0, 1280, 720); $0.template = "{name}_proxy" })
-        p.append(mk("proxy.h264.1080.tc", "H.264 proxy · 1080p + timecode", g2, .h264) { size(&$0, 1920, 1080); $0.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)]; $0.template = "{name}_proxy" })
+        p.append(mk("proxy.h264.1080.tc", "H.264 proxy · 1080p + \(L("w.timecode"))", g2, .h264) { size(&$0, 1920, 1080); $0.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)]; $0.template = "{name}_proxy" })
         p.append(mk("proxy.hevc.1080", "H.265 proxy · 1080p", g2, .hevc) { size(&$0, 1920, 1080); $0.template = "{name}_proxy" })
         // Avid
         for c in [VCodec.dnxhrLB, .dnxhrSQ, .dnxhrHQ, .dnxhrHQX, .dnxhr444] { p.append(mk("avid.\(c.rawValue)", "\(c.label) · MOV", g3, c)) }
@@ -137,19 +137,19 @@ enum Presets {
         p.append(mk("web.h264.uhd", "H.264 · UHD (YouTube)", g4, .h264) { size(&$0, 3840, 2160); $0.template = "{name}_UHD" })
         p.append(mk("web.h264.1080", "H.264 · 1080p (web, Vimeo)", g4, .h264) { size(&$0, 1920, 1080); $0.template = "{name}_1080p" })
         p.append(mk("web.h264.720", "H.264 · 720p", g4, .h264) { size(&$0, 1280, 720); $0.template = "{name}_720p" })
-        p.append(mk("web.h264.540", "H.264 · 540p (aperçu léger)", g4, .h264) { size(&$0, 960, 540); $0.template = "{name}_540p" })
-        p.append(mk("web.h264.square", "H.264 · carré 1080 (réseaux sociaux)", g4, .h264) { size(&$0, 1080, 1080, pad: true); $0.template = "{name}_carre" })
-        p.append(mk("web.h264.vertical", "H.264 · vertical 1080×1920", g4, .h264) { size(&$0, 1080, 1920, pad: true); $0.template = "{name}_vertical" })
+        p.append(mk("web.h264.540", "H.264 · 540p (\(L("w.preview")))", g4, .h264) { size(&$0, 960, 540); $0.template = "{name}_540p" })
+        p.append(mk("web.h264.square", "H.264 · 1080 \(L("w.square")) (\(L("w.social")))", g4, .h264) { size(&$0, 1080, 1080, pad: true); $0.template = "{name}_square" })
+        p.append(mk("web.h264.vertical", "H.264 · \(L("w.vertical")) 1080×1920", g4, .h264) { size(&$0, 1080, 1920, pad: true); $0.template = "{name}_vertical" })
         p.append(mk("web.hevc.uhd", "H.265 · UHD", g4, .hevc) { size(&$0, 3840, 2160); $0.template = "{name}_UHD" })
         p.append(mk("web.hevc.1080", "H.265 · 1080p", g4, .hevc) { size(&$0, 1920, 1080); $0.template = "{name}_1080p" })
         for f in [(24.0, "24"), (25.0, "25"), (30.0, "30")] {
             p.append(mk("web.h264.1080.\(f.1)", "H.264 · 1080p · \(f.1) i/s", g4, .h264) { size(&$0, 1920, 1080); $0.fps = f.0; $0.template = "{name}_1080p\(f.1)" })
         }
         // Rushes
-        p.append(mk("daily.h264.1080", "Rushes H.264 · 1080p (timecode, bobine, nom) + ALE", g5, .h264) { size(&$0, 1920, 1080); daily(&$0) })
-        p.append(mk("daily.h264.720", "Rushes H.264 · 720p (timecode, nom)", g5, .h264) { size(&$0, 1280, 720); $0.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)]; $0.template = "{name}_rushes" })
-        p.append(mk("daily.prores.lt", "Rushes ProRes LT · 1080p + ALE", g5, .proRes422LT) { size(&$0, 1920, 1080); daily(&$0) })
-        p.append(mk("daily.dnx.sq", "Rushes DNxHR SQ · 1080p + ALE", g5, .dnxhrSQ) { size(&$0, 1920, 1080); daily(&$0) })
+        p.append(mk("daily.h264.1080", "\(L("w.dailies")) H.264 · 1080p (\(L("w.timecode")), \(L("w.reel")), \(L("w.name"))) + ALE", g5, .h264) { size(&$0, 1920, 1080); daily(&$0) })
+        p.append(mk("daily.h264.720", "\(L("w.dailies")) H.264 · 720p (\(L("w.timecode")), \(L("w.name")))", g5, .h264) { size(&$0, 1280, 720); $0.burn = [BurnItem(field: .timecode, pos: .bl), BurnItem(field: .clipName, pos: .tl)]; $0.template = "{name}_rushes" })
+        p.append(mk("daily.prores.lt", "\(L("w.dailies")) ProRes LT · 1080p + ALE", g5, .proRes422LT) { size(&$0, 1920, 1080); daily(&$0) })
+        p.append(mk("daily.dnx.sq", "\(L("w.dailies")) DNxHR SQ · 1080p + ALE", g5, .dnxhrSQ) { size(&$0, 1920, 1080); daily(&$0) })
         // Caméras : log vers Rec.709
         let cams: [(CamLog, String)] = [(.logC3, "ARRI LogC3"), (.slog3Cine, "Sony S-Log3"), (.canonLog3, "Canon Log 3"), (.vlog, "Panasonic V-Log"), (.bmdFilmGen5, "Blackmagic Gen 5"), (.log3G10, "RED Log3G10")]
         for (cam, name) in cams {
