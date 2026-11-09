@@ -262,7 +262,7 @@ final class AppModel {
         let catalog = catalog, meta = meta, thumbs = thumbs, dir = exports.outputDir
         let name = (root?.lastPathComponent ?? "kYNEDIT")
         Task {
-            var lines = [csv([L("list.name"), "Chemin", L("info.duration"), L("info.resolution"), "i/s", L("info.codec"), L("inspector.rating"), L("inspector.label"), L("inspector.tags"), L("inspector.note"), L("player.markers"), L("player.subclips")])]
+            var lines = [csv([L("list.name"), L("info.path"), L("info.duration"), L("info.resolution"), L("unit.fps"), L("info.codec"), L("inspector.rating"), L("inspector.label"), L("inspector.tags"), L("inspector.note"), L("player.markers"), L("player.subclips")])]
             for c in list {
                 let info = await thumbs.load(c).info
                 let m = meta[c.path] ?? ClipMeta()

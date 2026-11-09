@@ -145,7 +145,7 @@ enum Presets {
         p.append(mk("web.hevc.uhd", "H.265 · UHD", g4, .hevc) { size(&$0, 3840, 2160); $0.template = "{name}_UHD" })
         p.append(mk("web.hevc.1080", "H.265 · 1080p", g4, .hevc) { size(&$0, 1920, 1080); $0.template = "{name}_1080p" })
         for f in [(24.0, "24"), (25.0, "25"), (30.0, "30")] {
-            p.append(mk("web.h264.1080.\(f.1)", "H.264 · 1080p · \(f.1) i/s", g4, .h264) { size(&$0, 1920, 1080); $0.fps = f.0; $0.template = "{name}_1080p\(f.1)" })
+            p.append(mk("web.h264.1080.\(f.1)", "H.264 · 1080p · \(f.1) \(L("unit.fps"))", g4, .h264) { size(&$0, 1920, 1080); $0.fps = f.0; $0.template = "{name}_1080p\(f.1)" })
         }
         // Rewrap : nouveau conteneur, aucun réencodage
         for w in [Wrap.mov, .mp4, .mxf] { p.append(mk("rewrap.\(w.rawValue)", "\(L("codec.rewrap")) · \(w.label)", g4, .rewrap, wrap: w) { $0.template = "{name}_rewrap" }) }

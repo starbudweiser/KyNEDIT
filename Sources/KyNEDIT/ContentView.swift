@@ -15,14 +15,14 @@ struct ContentView: View {
                 Brand.text(Brand.name).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.textStrong)
                 ForEach(Tab.allCases, id: \.self) { t in
                     Text(L(t.key) + (t == .exports && model.exports.pendingCount > 0 ? " (\(model.exports.pendingCount))" : "")).font(.system(size: 12))
-                        .padding(.horizontal, 12).padding(.vertical, 5)
+                        .padding(.horizontal, 12).frame(height: 28)
                         .background(tab == t ? Socle.control : .clear, in: RoundedRectangle(cornerRadius: 5))
                         .foregroundColor(tab == t ? Socle.textStrong : Socle.muted)
                         .onTapGesture { tab = t }
                 }
                 Spacer()
                 TextField(L("search.placeholder"), text: $model.query).textFieldStyle(.plain)
-                    .padding(.horizontal, 10).padding(.vertical, 5).frame(maxWidth: 360)
+                    .padding(.horizontal, 10).frame(height: 28).frame(maxWidth: 360)
                     .background(Socle.sunken, in: RoundedRectangle(cornerRadius: 5))
                 if model.root != nil { button(L("action.open")) { model.chooseFolder() } }
             }
@@ -58,7 +58,7 @@ struct ContentView: View {
         .sheet(isPresented: $model.showRename) { RenameSheet(model: model) }
         .onAppear { // au lancement : fenêtre à taille raisonnable, centrée dans l'écran
             DispatchQueue.main.async {
-                guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (w.screen ?? NSScreen.main)?.visibleFrame else { return }
+                guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (NSScreen.screens.first ?? NSScreen.main)?.visibleFrame else { return }
                 let size = NSSize(width: min(1466, v.width * 0.95), height: min(1030, v.height * 0.95))
                 w.setFrame(NSRect(x: v.midX - size.width / 2, y: v.midY - size.height / 2, width: size.width, height: size.height), display: true)
             }
@@ -74,7 +74,7 @@ struct ContentView: View {
 func button(_ title: String, main: Bool = false, action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Text(title).font(.system(size: 12, weight: .semibold)).tracking(0.5).lineLimit(1).fixedSize()
-            .padding(.horizontal, 14).padding(.vertical, 6)
+            .padding(.horizontal, 14).frame(height: 28)
             .background(main ? Socle.action : Socle.control, in: RoundedRectangle(cornerRadius: 5))
             .foregroundColor(main ? Socle.onAction : Socle.text)
     }.buttonStyle(.plain)
@@ -164,18 +164,22 @@ struct ClipList: View {
             }
         }
     }
+    private func filterLabel(_ t: String, active: Bool) -> some View {
+        HStack(spacing: 4) { Text(t).lineLimit(1); Text("⌄").foregroundColor(Socle.subtle) }
+            .font(.system(size: 11)).foregroundColor(active ? Socle.accentText : Socle.muted).padding(.horizontal, 8).frame(height: 24).background(Socle.control, in: RoundedRectangle(cornerRadius: 4))
+    }
     private var filters: some View {
         HStack(spacing: 10) {
             Menu {
                 Button(L("filter.res.all")) { model.heightMin = 0 }
                 ForEach([(720, "HD 720+"), (1080, "Full HD 1080+"), (1440, "2K 1440+"), (2160, "UHD 2160+"), (4320, "8K 4320+")], id: \.0) { h in Button(h.1) { model.heightMin = h.0 } }
-            } label: { Text(model.heightMin == 0 ? L("filter.res") : "≥ \(model.heightMin)p").font(.system(size: 11)).foregroundColor(model.heightMin == 0 ? Socle.subtle : Socle.accentText) }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            } label: { filterLabel(model.heightMin == 0 ? L("filter.res") : "≥ \(model.heightMin)p", active: model.heightMin > 0) }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             Menu {
                 Button(L("filter.fps.all")) { model.fpsFilter = 0 }
-                ForEach([23.976, 24, 25, 29.97, 30, 50, 59.94, 60], id: \.self) { f in Button(String(format: f.rounded() == f ? "%.0f i/s" : "%.2f i/s", f)) { model.fpsFilter = f } }
-            } label: { Text(model.fpsFilter == 0 ? L("filter.fps") : String(format: model.fpsFilter.rounded() == model.fpsFilter ? "%.0f i/s" : "%.2f i/s", model.fpsFilter)).font(.system(size: 11)).foregroundColor(model.fpsFilter == 0 ? Socle.subtle : Socle.accentText) }
-                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                ForEach([23.976, 24, 25, 29.97, 30, 50, 59.94, 60], id: \.self) { f in Button(fpsText(f)) { model.fpsFilter = f } }
+            } label: { filterLabel(model.fpsFilter == 0 ? L("filter.fps") : fpsText(model.fpsFilter), active: model.fpsFilter > 0) }
+                .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
             StarRating(value: model.ratingMin, size: 13) { model.ratingMin = model.ratingMin == $0 ? 0 : $0 }
             ForEach(1...3, id: \.self) { c in
                 Circle().fill(labelColors[c]).frame(width: 10, height: 10)

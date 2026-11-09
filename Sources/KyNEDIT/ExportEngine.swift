@@ -41,7 +41,7 @@ final class Transcoder: @unchecked Sendable {
     func run(progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
         if ["braw", "r3d", "ari", "arx", "crm"].contains((path as NSString).pathExtension.lowercased()) && !Raw.decodable(ext: (path as NSString).pathExtension.lowercased()) { throw ExportError(message: L("export.raw")) }
         if Raw.decodable(ext: (path as NSString).pathExtension.lowercased()) { // AVFoundation ne lit pas le RAW : chemin SDK
-            guard let clip = Raw.open(path) else { throw ExportError(message: "SDK RAW introuvable ou clip illisible.") }
+            guard let clip = Raw.open(path) else { throw ExportError(message: L("err.rawSDK")) }
             let start = max(0, tin ?? 0), end = min(tout ?? clip.duration, clip.duration)
             let part = output.deletingLastPathComponent().appendingPathComponent(output.lastPathComponent + ".part")
             try? FileManager.default.removeItem(at: part)
@@ -51,11 +51,11 @@ final class Transcoder: @unchecked Sendable {
             } catch { try? FileManager.default.removeItem(at: part); throw error }
         }
         let asset = AVURLAsset(url: URL(fileURLWithPath: path))
-        guard let vTrack = try await asset.loadTracks(withMediaType: .video).first else { throw ExportError(message: "Aucune piste vidéo.") }
+        guard let vTrack = try await asset.loadTracks(withMediaType: .video).first else { throw ExportError(message: L("err.noVideo")) }
         let (size, fps, transform) = try await vTrack.load(.naturalSize, .nominalFrameRate, .preferredTransform)
         let total = try await asset.load(.duration).seconds
         let start = max(0, tin ?? 0), end = min(tout ?? total, total)
-        guard end > start else { throw ExportError(message: "Plage vide.") }
+        guard end > start else { throw ExportError(message: L("err.emptyRange")) }
         let range = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 600), end: CMTime(seconds: end, preferredTimescale: 600))
         let span = range.duration.seconds
         let part = output.deletingLastPathComponent().appendingPathComponent(output.lastPathComponent + ".part")
@@ -75,7 +75,7 @@ final class Transcoder: @unchecked Sendable {
         else if preset.isProRes { pixels = [kCVPixelFormatType_422YpCbCr10, kCVPixelFormatType_32BGRA] }
         else if hevc10 { pixels = [kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange, kCVPixelFormatType_32BGRA] }
         else { pixels = [kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, kCVPixelFormatType_32BGRA] }
-        var lastError: Error = ExportError(message: "Lecture impossible.")
+        var lastError: Error = ExportError(message: L("err.read"))
         for pixel in pixels {
             do {
                 let written = try await attempt(asset: asset, vTrack: vTrack, size: size, fps: Double(fps), transform: transform,
@@ -83,7 +83,7 @@ final class Transcoder: @unchecked Sendable {
                 return try finalize(part: part, written: written, fps: Double(fps))
             } catch {
                 try? FileManager.default.removeItem(at: part)
-                if isCancelled { throw ExportError(message: "Annulé.") }
+                if isCancelled { throw ExportError(message: L("err.cancelled")) }
                 lastError = error
             }
         }
@@ -97,7 +97,7 @@ final class Transcoder: @unchecked Sendable {
         let outDuration = AVURLAsset(url: output).duration.seconds
         if abs(outDuration - written) > 2.0 / max(fps, 24) + 0.05 {
             try? FileManager.default.removeItem(at: output)
-            throw ExportError(message: String(format: "Durée écrite %.2f s au lieu de %.2f s.", outDuration, written))
+            throw ExportError(message: L("err.duration", outDuration, written))
         }
         return outDuration
     }
@@ -120,17 +120,17 @@ final class Transcoder: @unchecked Sendable {
 
     /// Export d'un clip Blackmagic RAW : images décodées par le SDK (BGRA 8 bits, pleine résolution), audio converti en PCM 16 bits.
     private func runBRAW(start: Double, end: Double, part: URL, progress: @escaping @Sendable (Double) -> Void) async throws -> Double {
-        guard let clip = Raw.open(path) else { throw ExportError(message: "SDK RAW introuvable ou clip illisible.") }
+        guard let clip = Raw.open(path) else { throw ExportError(message: L("err.rawSDK")) }
         let fps = clip.fps > 0 ? clip.fps : 24
         let first = max(0, Int((start * fps).rounded(.down))), last = min(clip.frameCount, Int((end * fps).rounded(.down)))
-        guard last > first else { throw ExportError(message: "Plage vide.") }
+        guard last > first else { throw ExportError(message: L("err.emptyRange")) }
         let span = Double(last - first) / fps
         let writer = try AVAssetWriter(outputURL: part, fileType: preset.fileType)
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings(size: CGSize(width: clip.width, height: clip.height), fps: fps, hevc10: false))
         vIn.expectsMediaDataInRealTime = false
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: vIn, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: clip.width, kCVPixelBufferHeightKey as String: clip.height])
-        guard writer.canAdd(vIn) else { throw ExportError(message: "Réglage vidéo refusé par l'encodeur.") }
+        guard writer.canAdd(vIn) else { throw ExportError(message: L("err.encoderSettings")) }
         writer.add(vIn)
         var aIn: AVAssetWriterInput?
         if let a = clip.audio {
@@ -142,7 +142,7 @@ final class Transcoder: @unchecked Sendable {
             if writer.canAdd(input) { writer.add(input); aIn = input }
         }
         self.writer = writer
-        guard writer.startWriting() else { throw writer.error ?? ExportError(message: "Écriture impossible.") }
+        guard writer.startWriting() else { throw writer.error ?? ExportError(message: L("err.write")) }
         writer.startSession(atSourceTime: .zero)
         let videoJob = BRAWVideoJob(clip: clip, input: vIn, adaptor: adaptor, first: first, last: last, fps: fps, transcoder: self)
         var audioJob: BRAWAudioJob?
@@ -154,10 +154,10 @@ final class Transcoder: @unchecked Sendable {
             group.addTask { await videoJob.run(progress: progress) }
             if let aj { group.addTask { await aj.run() } }
         }
-        if isCancelled { writer.cancelWriting(); throw ExportError(message: "Annulé.") }
+        if isCancelled { writer.cancelWriting(); throw ExportError(message: L("err.cancelled")) }
         if let e = videoJob.error { writer.cancelWriting(); throw e }
         await writer.finishWriting()
-        guard writer.status == .completed else { throw writer.error ?? ExportError(message: "Écriture interrompue.") }
+        guard writer.status == .completed else { throw writer.error ?? ExportError(message: L("err.writeStopped")) }
         progress(1)
         return span
     }
@@ -168,14 +168,14 @@ final class Transcoder: @unchecked Sendable {
         let reader = try AVAssetReader(asset: asset); reader.timeRange = range
         let vOut = AVAssetReaderTrackOutput(track: vTrack, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: pixel])
         vOut.alwaysCopiesSampleData = false
-        guard reader.canAdd(vOut) else { throw ExportError(message: "Format vidéo non lisible.") }
+        guard reader.canAdd(vOut) else { throw ExportError(message: L("err.videoFormat")) }
         reader.add(vOut)
 
         let writer = try AVAssetWriter(outputURL: part, fileType: preset.fileType)
         let settings = videoSettings(size: size, fps: fps, hevc10: hevc10)
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
         vIn.transform = transform; vIn.expectsMediaDataInRealTime = false
-        guard writer.canAdd(vIn) else { throw ExportError(message: "Réglage vidéo refusé par l'encodeur.") }
+        guard writer.canAdd(vIn) else { throw ExportError(message: L("err.encoderSettings")) }
         writer.add(vIn)
         // LUT : chaque image passe par Core Image (même filtre que l'aperçu), puis dans le tampon de l'encodeur.
         var lutHandler: (@Sendable (CMSampleBuffer) -> Bool)?
@@ -193,7 +193,7 @@ final class Transcoder: @unchecked Sendable {
                 ctx.render(img, to: out)
                 return adaptorRef.append(out, withPresentationTime: CMSampleBufferGetPresentationTimeStamp(buf))
             }
-        } else if lutPath != nil { throw ExportError(message: "LUT illisible.") }
+        } else if lutPath != nil { throw ExportError(message: L("err.lutRead")) }
 
         // Audio : décodé en PCM puis AAC (MP4) ou PCM (MOV).
         var aOut: AVAssetReaderTrackOutput?, aIn: AVAssetWriterInput?
@@ -207,8 +207,8 @@ final class Transcoder: @unchecked Sendable {
             if reader.canAdd(out), writer.canAdd(input) { reader.add(out); writer.add(input); aOut = out; aIn = input }
         }
         self.reader = reader; self.writer = writer
-        guard reader.startReading() else { throw reader.error ?? ExportError(message: "Lecture impossible.") }
-        guard writer.startWriting() else { throw writer.error ?? ExportError(message: "Écriture impossible.") }
+        guard reader.startReading() else { throw reader.error ?? ExportError(message: L("err.read")) }
+        guard writer.startWriting() else { throw writer.error ?? ExportError(message: L("err.write")) }
         writer.startSession(atSourceTime: range.start)
 
         let startSeconds = range.start.seconds
@@ -218,10 +218,10 @@ final class Transcoder: @unchecked Sendable {
             group.addTask { await self.pump(vPair, queue: "video", handler: videoHandler) { pts in progress(min(1, max(0, (pts - startSeconds) / span))) } }
             if let aOut, let aIn { let aPair = MediaPair(out: aOut, input: aIn); group.addTask { await self.pump(aPair, queue: "audio", handler: nil) { _ in } } }
         }
-        if isCancelled { writer.cancelWriting(); throw ExportError(message: "Annulé.") }
-        if reader.status == .failed { writer.cancelWriting(); throw reader.error ?? ExportError(message: "Lecture interrompue.") }
+        if isCancelled { writer.cancelWriting(); throw ExportError(message: L("err.cancelled")) }
+        if reader.status == .failed { writer.cancelWriting(); throw reader.error ?? ExportError(message: L("err.readStopped")) }
         await writer.finishWriting()
-        guard writer.status == .completed else { throw writer.error ?? ExportError(message: "Écriture interrompue.") }
+        guard writer.status == .completed else { throw writer.error ?? ExportError(message: L("err.writeStopped")) }
         progress(1)
         return span
     }
@@ -268,11 +268,11 @@ final class BRAWVideoJob: @unchecked Sendable {
             input.requestMediaDataWhenReady(on: q) {
                 while self.input.isReadyForMoreMediaData && !finished {
                     if self.transcoder.cancelledNow || next >= self.last { stop(); return }
-                    guard let pool = self.adaptor.pixelBufferPool else { self.error = ExportError(message: "Tampons vidéo indisponibles."); stop(); return }
+                    guard let pool = self.adaptor.pixelBufferPool else { self.error = ExportError(message: L("err.buffers")); stop(); return }
                     var pb: CVPixelBuffer?
-                    guard CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pb) == kCVReturnSuccess, let pb else { self.error = ExportError(message: "Mémoire insuffisante."); stop(); return }
+                    guard CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pb) == kCVReturnSuccess, let pb else { self.error = ExportError(message: L("err.memory")); stop(); return }
                     guard let size = self.clip.decode(next, scale: 0, into: scratch, capacity: w * h * 4 + 4096), size.width == w, size.height == h else {
-                        self.error = ExportError(message: "Décodage BRAW échoué à l'image \(next).")
+                        self.error = ExportError(message: L("err.brawDecode", next))
                         stop(); return
                     }
                     CVPixelBufferLockBaseAddress(pb, [])
@@ -280,7 +280,7 @@ final class BRAWVideoJob: @unchecked Sendable {
                     for y in 0..<h { memcpy(dst + y * stride, scratch + y * w * 4, w * 4) }
                     CVPixelBufferUnlockBaseAddress(pb, [])
                     let t = CMTime(value: CMTimeValue(next - self.first), timescale: CMTimeScale(self.fps.rounded()))
-                    if !self.adaptor.append(pb, withPresentationTime: t) { self.error = ExportError(message: "Écriture de l'image \(next) refusée."); stop(); return }
+                    if !self.adaptor.append(pb, withPresentationTime: t) { self.error = ExportError(message: L("err.frameWrite", next)); stop(); return }
                     next += 1
                     progress(Double(next - self.first) / Double(self.last - self.first))
                 }

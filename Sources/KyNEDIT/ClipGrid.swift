@@ -1,6 +1,14 @@
 import SwiftUI
 import AppKit
 
+/// Cadence avec l'unité de la langue (« i/s », « fps », « f/s »).
+func fpsText(_ f: Double) -> String {
+    var t = String(format: "%.3f", f)
+    while t.hasSuffix("0") { t.removeLast() }
+    if t.hasSuffix(".") { t.removeLast() }
+    return t + " " + L("unit.fps")
+}
+
 func formatDuration(_ s: Double) -> String {
     let t = Int(s.rounded()); let h = t / 3600, m = (t % 3600) / 60, sec = t % 60
     return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec) : String(format: "%d:%02d", m, sec)
@@ -9,7 +17,7 @@ func formatDuration(_ s: Double) -> String {
 func formatInfo(_ i: MediaInfo) -> String {
     var parts: [String] = []
     if i.width > 0 { parts.append("\(i.width)×\(i.height)") }
-    if i.fps > 0 { parts.append(String(format: i.fps.rounded() == i.fps ? "%.0f i/s" : "%.2f i/s", i.fps)) }
+    if i.fps > 0 { parts.append(fpsText(i.fps)) }
     return parts.joined(separator: " · ")
 }
 

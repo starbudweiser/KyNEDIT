@@ -78,13 +78,13 @@ final class OffloadModel {
             }
             targets.append((i, t))
         }
-        if targets.isEmpty { return (true, "déjà copié", entries) }
-        guard let input = try? FileHandle(forReadingFrom: f.url) else { return (false, "lecture impossible", entries) }
+        if targets.isEmpty { return (true, L("off.r.skipped"), entries) }
+        guard let input = try? FileHandle(forReadingFrom: f.url) else { return (false, L("off.r.readFail"), entries) }
         defer { try? input.close() }
         var outs: [(Int, URL, FileHandle)] = []
         for (i, t) in targets {
             fm.createFile(atPath: t.path + ".part", contents: nil)
-            guard let h = try? FileHandle(forWritingTo: URL(fileURLWithPath: t.path + ".part")) else { return (false, "écriture impossible", entries) }
+            guard let h = try? FileHandle(forWritingTo: URL(fileURLWithPath: t.path + ".part")) else { return (false, L("off.r.writeFail"), entries) }
             outs.append((i, t, h))
         }
         var md5 = Insecure.MD5()
@@ -104,9 +104,9 @@ final class OffloadModel {
         var problems: [String] = []
         for o in outs {
             try? o.2.close()
-            if failed { try? fm.removeItem(atPath: o.1.path + ".part"); problems.append("écriture"); continue }
+            if failed { try? fm.removeItem(atPath: o.1.path + ".part"); problems.append(L("off.r.write")); continue }
             try? fm.removeItem(at: o.1)
-            do { try fm.moveItem(atPath: o.1.path + ".part", toPath: o.1.path) } catch { problems.append("renommage"); continue }
+            do { try fm.moveItem(atPath: o.1.path + ".part", toPath: o.1.path) } catch { problems.append(L("off.r.rename")); continue }
             try? fm.setAttributes([.modificationDate: f.mtime], ofItemAtPath: o.1.path)
         }
         if verify && !failed {   // relecture de chaque copie en parallèle
@@ -115,14 +115,14 @@ final class OffloadModel {
                 g.enter()
                 DispatchQueue.global(qos: .userInitiated).async {
                     let ok = Self.md5(of: o.1) == hash
-                    lock.lock(); if !ok { problems.append("somme différente") }; lock.unlock()
+                    lock.lock(); if !ok { problems.append(L("off.r.mismatch")) }; lock.unlock()
                     g.leave()
                 }
             }
             g.wait()
         }
         if problems.isEmpty { for o in outs { entries[o.0] = (f.rel, f.size, f.mtime, hash) } }
-        return (problems.isEmpty, problems.isEmpty ? (verify ? "vérifié" : "copié") : problems.joined(separator: ", "), entries)
+        return (problems.isEmpty, problems.isEmpty ? (verify ? L("off.r.verified") : L("off.r.copied")) : problems.joined(separator: ", "), entries)
     }
 
     nonisolated static func md5(of url: URL) -> String? {
@@ -150,51 +150,43 @@ struct OffloadView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                section(L("off.source")) {
-                    HStack {
+                SCard(title: L("off.source")) {
+                    HStack(spacing: 12) {
                         Text(m.source?.path ?? "—").font(.system(size: 12)).foregroundColor(Socle.text).lineLimit(1).truncationMode(.middle)
-                        Spacer()
-                        button(L("export.choose")) { m.chooseSource() }
-                    }
+                        Spacer(minLength: 8)
+                        SLink(title: L("export.choose")) { m.chooseSource() }
+                    }.frame(minHeight: UI.rowHeight)
                 }
-                section(L("off.dest")) {
+                SCard(title: L("off.dest")) {
                     ForEach(m.destinations, id: \.self) { d in
-                        HStack {
+                        HStack(spacing: 12) {
                             Text(d.path).font(.system(size: 12)).foregroundColor(Socle.text).lineLimit(1).truncationMode(.middle)
-                            Spacer()
-                            Text("✕").font(.system(size: 11)).foregroundColor(Socle.subtle).onTapGesture { m.destinations.removeAll { $0 == d } }
-                        }
+                            Spacer(minLength: 8)
+                            SLink(title: "✕") { m.destinations.removeAll { $0 == d } }
+                        }.frame(minHeight: UI.rowHeight)
                     }
-                    if m.destinations.count < 4 { button(L("off.add")) { m.addDestination() } }
+                    if m.destinations.count < 4 { SLink(title: L("off.add")) { m.addDestination() } }
                 }
-                section(L("off.options")) {
-                    check(L("off.verify"), $m.verify); check(L("off.incremental"), $m.incremental); check(L("off.mhl"), $m.writeMHL)
+                SCard(title: L("off.options")) {
+                    SCheck(title: L("off.verify"), isOn: $m.verify)
+                    SCheck(title: L("off.incremental"), isOn: $m.incremental)
+                    SCheck(title: L("off.mhl"), isOn: $m.writeMHL)
                 }
-                HStack {
+                HStack(spacing: 14) {
                     if m.running { button(L("off.cancel")) { m.cancel() } } else { button(L("off.run"), main: true) { m.run() } }
                     if m.total > 0 {
-                        ProgressView(value: m.bytesTotal > 0 ? Double(m.bytesDone) / Double(m.bytesTotal) : 0).tint(Socle.action).frame(maxWidth: 300)
-                        Text(L("off.progress", m.done, m.total)).font(.system(size: 11)).foregroundColor(Socle.muted)
+                        ProgressView(value: m.bytesTotal > 0 ? Double(m.bytesDone) / Double(m.bytesTotal) : 0).tint(Socle.action).frame(maxWidth: 320)
+                        Text(L("off.progress", m.done, m.total)).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1)
                     }
-                }
+                    Spacer(minLength: 0)
+                }.frame(minHeight: 32)
                 if !m.current.isEmpty { Text(m.current).font(.system(size: 11)).foregroundColor(Socle.subtle).lineLimit(1).truncationMode(.middle) }
                 if m.finished {
                     let bad = m.results.filter { !$0.ok }
                     Text(bad.isEmpty ? L("off.done") : L("off.errors", bad.count)).font(.system(size: 12, weight: .semibold)).foregroundColor(bad.isEmpty ? Color(hex: 0x4ADE80) : Color(hex: 0xF87171))
-                    ForEach(bad) { r in Text("\(r.file) : \(r.note)").font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)) }
+                    ForEach(bad) { r in Text("\(r.file) : \(r.note)").font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)).lineLimit(2) }
                 }
-            }.padding(28).frame(maxWidth: 760, alignment: .leading).frame(maxWidth: .infinity)
+            }.padding(28).frame(maxWidth: 800, alignment: .leading).frame(maxWidth: .infinity)
         }.background(Socle.bg)
-    }
-
-    private func section<C: View>(_ t: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(t).font(.system(size: 12, weight: .semibold)).foregroundColor(Socle.textStrong)
-            c()
-        }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(Socle.surface, in: RoundedRectangle(cornerRadius: 6))
-    }
-    private func check(_ t: String, _ b: Binding<Bool>) -> some View {
-        HStack(spacing: 6) { Text(b.wrappedValue ? "☑" : "☐").foregroundColor(Socle.accentText); Text(t).font(.system(size: 12)).foregroundColor(Socle.text) }
-            .contentShape(Rectangle()).onTapGesture { b.wrappedValue.toggle() }
     }
 }

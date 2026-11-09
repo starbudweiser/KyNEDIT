@@ -143,7 +143,7 @@ final class ExportQueue {
                 finish(id) { $0.state = .done; $0.progress = 1; $0.seconds = secs; $0.elapsed = Date().timeIntervalSince(t0) }
             } catch {
                 finish(id) {
-                    $0.state = (error as? ExportError)?.message == "Annulé." ? .cancelled : .failed
+                    $0.state = (error as? ExportError)?.message == L("err.cancelled") ? .cancelled : .failed
                     $0.error = error.localizedDescription; $0.outputPath = nil
                 }
             }

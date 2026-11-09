@@ -50,17 +50,17 @@ final class ConvertTranscoder: @unchecked Sendable {
     fileprivate func openSource() throws -> Source {
         let ext = (path as NSString).pathExtension.lowercased()
         if Raw.decodable(ext: ext) {
-            guard let clip = Raw.open(path) else { throw ExportError(message: "SDK RAW introuvable ou clip illisible.") }
+            guard let clip = Raw.open(path) else { throw ExportError(message: L("err.rawSDK")) }
             let start = max(0, tin ?? 0), end = min(tout ?? clip.duration, clip.duration)
             return Source(width: clip.width, height: clip.height, fps: clip.fps > 0 ? clip.fps : 24, start: start, end: end, raw: clip)
         }
         if ["braw", "r3d", "ari", "arx", "crm"].contains(ext) { throw ExportError(message: L("export.raw")) }
         let asset = AVURLAsset(url: URL(fileURLWithPath: path))
         let sem = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var result: Result<Source, Error> = .failure(ExportError(message: "Lecture impossible."))
+        nonisolated(unsafe) var result: Result<Source, Error> = .failure(ExportError(message: L("err.read")))
         Task.detached {
             do {
-                guard let v = try await asset.loadTracks(withMediaType: .video).first else { throw ExportError(message: "Aucune piste vidéo.") }
+                guard let v = try await asset.loadTracks(withMediaType: .video).first else { throw ExportError(message: L("err.noVideo")) }
                 let (size, fps, tr) = try await v.load(.naturalSize, .nominalFrameRate, .preferredTransform)
                 let total = try await asset.load(.duration).seconds
                 let o = size.applying(tr)
@@ -100,15 +100,15 @@ final class ConvertTranscoder: @unchecked Sendable {
         let src = try openSource()
         dlog("opened")
         let span = src.end - src.start
-        guard span > 0 else { throw ExportError(message: "Plage vide.") }
+        guard span > 0 else { throw ExportError(message: L("err.emptyRange")) }
         try? FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         let part = output.deletingLastPathComponent().appendingPathComponent(output.lastPathComponent + ".part")
         try? FileManager.default.removeItem(at: part)
         let (ow, oh, scale) = outputSize(src.width, src.height)
         let outFps = s.fps > 0 ? s.fps : src.fps
         if s.codec.isHD {
-            guard ow == 1920, oh == 1080 else { throw ExportError(message: "DNxHD demande une image 1080p (réglez la taille sur 1920×1080).") }
-            guard s.codec.dnxhdRate(fps: outFps) != nil else { throw ExportError(message: "DNxHD 1080p n'existe pas à cette cadence.") }
+            guard ow == 1920, oh == 1080 else { throw ExportError(message: L("err.dnxhdSize")) }
+            guard s.codec.dnxhdRate(fps: outFps) != nil else { throw ExportError(message: L("err.dnxhdRate")) }
         }
         do {
             if s.codec == .rewrap {
@@ -124,7 +124,7 @@ final class ConvertTranscoder: @unchecked Sendable {
             }
         } catch {
             try? FileManager.default.removeItem(at: part); for n in 1...8 { try? FileManager.default.removeItem(at: audioPart(part, n)) }
-            throw isCancelled ? ExportError(message: "Annulé.") : error
+            throw isCancelled ? ExportError(message: L("err.cancelled")) : error
         }
         progress(1)
         return span
@@ -179,7 +179,7 @@ final class ConvertTranscoder: @unchecked Sendable {
         let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings(w: ow, h: oh, fps: outFps, tenBit: hevc10))
         vIn.expectsMediaDataInRealTime = false
         if direct { vIn.transform = src.transform }
-        guard writer.canAdd(vIn) else { throw ExportError(message: "Réglage vidéo refusé par l'encodeur.") }
+        guard writer.canAdd(vIn) else { throw ExportError(message: L("err.encoderSettings")) }
         writer.add(vIn)
         var adaptor: AVAssetWriterInputPixelBufferAdaptor?
         if !direct {
@@ -200,7 +200,7 @@ final class ConvertTranscoder: @unchecked Sendable {
             let readFormat: OSType = direct ? (s.codec.isProRes && pixel == kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange ? kCVPixelFormatType_422YpCbCr10 : pixel) : (src.sourceTenBit ? kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)
             let o = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: readFormat, kCVPixelBufferMetalCompatibilityKey as String: true])
             o.alwaysCopiesSampleData = false
-            guard r.canAdd(o) else { throw ExportError(message: "Format vidéo non lisible.") }
+            guard r.canAdd(o) else { throw ExportError(message: L("err.videoFormat")) }
             r.add(o); vOut = o
             if s.audio != .none {
                 let tracks = (try? syncLoad(asset, .audio)) ?? []
@@ -228,10 +228,10 @@ final class ConvertTranscoder: @unchecked Sendable {
                 rawAudio = BRAWAudioJob(clip: raw, input: ai, from: Int(src.start * Double(a.rate)), to: Int(src.end * Double(a.rate)))
             }
         }
-        guard writer.startWriting() else { throw writer.error ?? ExportError(message: "Écriture impossible.") }
+        guard writer.startWriting() else { throw writer.error ?? ExportError(message: L("err.write")) }
         writer.startSession(atSourceTime: src.raw == nil ? CMTime(seconds: src.start, preferredTimescale: 6000) : .zero)
         if let rawAudio { group.enter(); Task.detached { await rawAudio.run(); group.leave() } }
-        if let rdr { guard rdr.startReading() else { throw rdr.error ?? ExportError(message: "Lecture impossible.") } }
+        if let rdr { guard rdr.startReading() else { throw rdr.error ?? ExportError(message: L("err.read")) } }
 
         // Audio : une file par piste.
         for (i, (ao, ai)) in audio.enumerated() {
@@ -272,19 +272,19 @@ final class ConvertTranscoder: @unchecked Sendable {
                                       makeBuffer: { var pb: CVPixelBuffer?; guard let p = pool.v.pixelBufferPool, CVPixelBufferPoolCreatePixelBuffer(nil, p, &pb) == kCVReturnSuccess else { return nil }; return pb },
                                       sink: { pb, t in
                                           while !vBox.v.isReadyForMoreMediaData { if self.isCancelled { return }; usleep(300) }
-                                          if !pool.v.append(pb, withPresentationTime: t) { throw self.writer?.error ?? ExportError(message: "Écriture refusée.") }
+                                          if !pool.v.append(pb, withPresentationTime: t) { throw self.writer?.error ?? ExportError(message: L("err.writeRefused")) }
                                       }, report: report) }
                 catch { self.loopError = error }
             }
         }
         group.wait()
-        if isCancelled { writer.cancelWriting(); throw ExportError(message: "Annulé.") }
+        if isCancelled { writer.cancelWriting(); throw ExportError(message: L("err.cancelled")) }
         if let e = loopError { writer.cancelWriting(); throw e }
-        if let rdr, rdr.status == .failed { writer.cancelWriting(); throw rdr.error ?? ExportError(message: "Lecture interrompue.") }
+        if let rdr, rdr.status == .failed { writer.cancelWriting(); throw rdr.error ?? ExportError(message: L("err.readStopped")) }
         let sem = DispatchSemaphore(value: 0)
         writer.finishWriting { sem.signal() }
         sem.wait()
-        guard writer.status == .completed else { throw writer.error ?? ExportError(message: "Écriture interrompue.") }
+        guard writer.status == .completed else { throw writer.error ?? ExportError(message: L("err.writeStopped")) }
     }
 
     fileprivate var loopError: Error?
@@ -402,7 +402,7 @@ extension ConvertTranscoder {
         let logCube = s.colorIn == .none ? nil : cubeFilter(33, Colour.cube(s.colorIn))
         var lutCube: CIFilter?
         if let p = s.lutPath {
-            guard let c = PlayerModel.parseCube(URL(fileURLWithPath: p)) else { throw ExportError(message: "LUT illisible.") }
+            guard let c = PlayerModel.parseCube(URL(fileURLWithPath: p)) else { throw ExportError(message: L("err.lutRead")) }
             lutCube = cubeFilter(c.size, c.data)
         }
         dlog("cubes built")
@@ -437,10 +437,10 @@ extension ConvertTranscoder {
                 guard !self.isCancelled, let b = vOut.copyNextSampleBuffer(), let pb = CMSampleBufferGetImageBuffer(b) else { return nil }
                 return (pb, CMSampleBufferGetPresentationTimeStamp(b).seconds - start)
             }
-        } else { throw ExportError(message: "Source illisible.") }
+        } else { throw ExportError(message: L("err.source")) }
 
         func render(_ pb: CVPixelBuffer, rel: Double) throws -> (CVPixelBuffer, CIRenderTask?) {
-            guard let out = makeBuffer() else { throw ExportError(message: "Tampons vidéo indisponibles.") }
+            guard let out = makeBuffer() else { throw ExportError(message: L("err.buffers")) }
             CVBufferPropagateAttachments(pb, out)
             if s.colorIn != .none || src.raw != nil {
                 CVBufferSetAttachment(out, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_709_2, .shouldPropagate)
@@ -452,8 +452,8 @@ extension ConvertTranscoder {
                 img = img.transformed(by: srcTransform)
                 img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
             }
-            if let f = logCube { f.setValue(img, forKey: kCIInputImageKey); guard let o = f.outputImage else { throw ExportError(message: "Conversion couleur impossible.") }; img = o }
-            if let f = lutCube { f.setValue(img, forKey: kCIInputImageKey); guard let o = f.outputImage else { throw ExportError(message: "LUT impossible à appliquer.") }; img = o }
+            if let f = logCube { f.setValue(img, forKey: kCIInputImageKey); guard let o = f.outputImage else { throw ExportError(message: L("err.colorFail")) }; img = o }
+            if let f = lutCube { f.setValue(img, forKey: kCIInputImageKey); guard let o = f.outputImage else { throw ExportError(message: L("err.lutApply")) }; img = o }
             if scale < 0.9999 {
                 img = img.applyingFilter("CILanczosScaleTransform", parameters: [kCIInputScaleKey: scale, kCIInputAspectRatioKey: 1])
             }
@@ -526,7 +526,7 @@ extension ConvertTranscoder {
 
 extension ConvertTranscoder {
     fileprivate func runFFmpeg(src: Source, ow: Int, oh: Int, outFps: Double, span: Double, direct: Bool, part: URL, progress: @escaping @Sendable (Double) -> Void) throws {
-        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: "DNxHR/DNxHD demande ffmpeg (introuvable).") }
+        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: L("err.ffmpegDNx")) }
         let (num, den) = rationalFps(outFps)
         let tcStart = meta.startFrames + Int((src.start * Double(meta.tcFps)).rounded())
         var a: [String] = ["-hide_banner", "-y", "-loglevel", "error", "-nostdin"]
@@ -612,7 +612,7 @@ extension ConvertTranscoder {
             var pool: CVPixelBufferPool?
             CVPixelBufferPoolCreate(nil, nil, [kCVPixelBufferPixelFormatTypeKey as String: pixel, kCVPixelBufferWidthKey as String: ow, kCVPixelBufferHeightKey as String: oh,
                 kCVPixelBufferMetalCompatibilityKey as String: true, kCVPixelBufferIOSurfacePropertiesKey as String: [:]] as CFDictionary, &pool)
-            guard let pool else { throw ExportError(message: "Tampons vidéo indisponibles.") }
+            guard let pool else { throw ExportError(message: L("err.buffers")) }
             let rd = src.asset.flatMap { try? $0 }  // asset déjà ouvert
             _ = rd
             // lecteur vidéo matériel pour les images d'origine
@@ -623,7 +623,7 @@ extension ConvertTranscoder {
                 let o = AVAssetReaderTrackOutput(track: vt, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: src.sourceTenBit ? kCVPixelFormatType_422YpCbCr10BiPlanarVideoRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, kCVPixelBufferMetalCompatibilityKey as String: true])
                 o.alwaysCopiesSampleData = false
                 r.add(o); vOut = o; reader = r
-                guard r.startReading() else { throw r.error ?? ExportError(message: "Lecture impossible.") }
+                guard r.startReading() else { throw r.error ?? ExportError(message: L("err.read")) }
             }
             let (_, scale, _) = (0, outputScale(src, ow, oh), 0)
             try gpuLoop(src: src, vOut: vOut, ow: ow, oh: oh, scale: scale, outFps: outFps, span: span,
@@ -647,10 +647,10 @@ extension ConvertTranscoder {
             try? w.close()
         }
         p.waitUntilExit()
-        if isCancelled { throw ExportError(message: "Annulé.") }
+        if isCancelled { throw ExportError(message: L("err.cancelled")) }
         if p.terminationStatus != 0 {
             let log = (try? String(contentsOf: errFile, encoding: .utf8)) ?? ""
-            throw ExportError(message: "ffmpeg a échoué : " + log.split(separator: "\n").suffix(2).joined(separator: " "))
+            throw ExportError(message: L("err.ffmpeg") + log.split(separator: "\n").suffix(2).joined(separator: " "))
         }
     }
 
@@ -676,7 +676,7 @@ extension ConvertTranscoder {
     /// Rewrap : les flux sont copiés tels quels dans un nouveau conteneur (très rapide, sans perte). Les sous-clips sont coupés à l'image clé précédente.
     fileprivate func runRewrap(src: Source, span: Double, part: URL, progress: @escaping @Sendable (Double) -> Void) throws {
         guard src.raw == nil else { throw ExportError(message: L("export.raw")) }
-        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: "Le rewrap demande ffmpeg (introuvable).") }
+        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: L("err.ffmpegRewrap")) }
         var a = ["-hide_banner", "-y", "-loglevel", "error", "-nostdin", "-progress", "pipe:1"]
         if src.start > 0 { a += ["-ss", String(format: "%.6f", src.start)] }
         a += ["-i", path, "-t", String(format: "%.6f", span), "-map", "0:v:0"]
@@ -693,8 +693,8 @@ extension ConvertTranscoder {
         proc = p
         try p.run(); p.waitUntilExit()
         out.fileHandleForReading.readabilityHandler = nil
-        if isCancelled { throw ExportError(message: "Annulé.") }
-        if p.terminationStatus != 0 { throw ExportError(message: "Rewrap impossible : ce conteneur n'accepte pas ces flux.") }
+        if isCancelled { throw ExportError(message: L("err.cancelled")) }
+        if p.terminationStatus != 0 { throw ExportError(message: L("err.rewrapFail")) }
     }
 
     fileprivate func outputScale(_ src: Source, _ ow: Int, _ oh: Int) -> Double {

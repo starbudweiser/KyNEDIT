@@ -61,7 +61,7 @@ struct PerformanceView: View {
             row(L("perf.chip"), hw.chip)
             row("CPU", L("perf.cpu", hw.perfCores, hw.effCores))
             if hw.gpuCores > 0 { row("GPU", L("perf.gpu", hw.gpuCores)) }
-            row(L("perf.memory"), "\(hw.memoryGB) Go")
+            row(L("perf.memory"), "\(hw.memoryGB) " + L("unit.gb"))
             row(L("perf.engines"), "\(hw.videoEngines) + \(hw.proResEngines)")
             Text(L("perf.engines.note", hw.videoEngines, hw.proResEngines)).font(.system(size: 11)).foregroundColor(Socle.subtle)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -127,11 +127,5 @@ struct PerformanceView: View {
         }
     }
 
-    private func card<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title.uppercased()).font(.system(size: 10.5)).tracking(0.8).foregroundColor(Socle.subtle)
-            content()
-        }
-        .padding(24).frame(maxWidth: .infinity, alignment: .topLeading).background(Socle.surface, in: RoundedRectangle(cornerRadius: 6))
-    }
+    private func card<C: View>(_ title: String, @ViewBuilder _ content: @escaping () -> C) -> some View { SCard(title: title) { content() } }
 }

@@ -50,14 +50,14 @@ final class SegmentedTranscoder: @unchecked Sendable {
             for _ in 0..<min(parallel, n) { launch() }
             while let d = try await group.next() { total += d; launch() }
         }
-        if isCancelled { throw ExportError(message: "Annulé.") }
+        if isCancelled { throw ExportError(message: L("err.cancelled")) }
         try concat(files, dir: dir)
         progress(1)
         return total
     }
 
     private func concat(_ files: [URL], dir: URL) throws {
-        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: "L'assemblage demande ffmpeg (introuvable).") }
+        guard let ff = FFmpegTool.ffmpeg else { throw ExportError(message: L("err.ffmpegAssembly")) }
         let list = dir.appendingPathComponent("list.txt")
         try files.map { "file '\($0.path.replacingOccurrences(of: "'", with: "'\\''"))'" }.joined(separator: "\n").write(to: list, atomically: true, encoding: .utf8)
         let part = output.deletingLastPathComponent().appendingPathComponent(output.lastPathComponent + ".part")
@@ -67,7 +67,7 @@ final class SegmentedTranscoder: @unchecked Sendable {
         p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice; p.standardInput = FileHandle.nullDevice
         proc = p
         try p.run(); p.waitUntilExit()
-        guard p.terminationStatus == 0 else { try? FileManager.default.removeItem(at: part); throw ExportError(message: "Assemblage impossible (flux incompatibles).") }
+        guard p.terminationStatus == 0 else { try? FileManager.default.removeItem(at: part); throw ExportError(message: L("err.assemblyFail")) }
         try? FileManager.default.removeItem(at: output)
         try FileManager.default.moveItem(at: part, to: output)
     }
