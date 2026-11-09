@@ -56,7 +56,7 @@ struct ContentView: View {
         .onAppear { // au lancement : fenêtre à taille raisonnable, centrée dans l'écran
             DispatchQueue.main.async {
                 guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (w.screen ?? NSScreen.main)?.visibleFrame else { return }
-                let size = NSSize(width: min(1280, v.width * 0.85), height: min(820, v.height * 0.85))
+                let size = NSSize(width: min(1466, v.width * 0.95), height: min(1030, v.height * 0.95))
                 w.setFrame(NSRect(x: v.midX - size.width / 2, y: v.midY - size.height / 2, width: size.width, height: size.height), display: true)
             }
         }

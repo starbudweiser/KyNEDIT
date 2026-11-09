@@ -10,7 +10,7 @@ struct KyNEDITApp: App {
                 .preferredColorScheme(.dark)
         }
         .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: 1280, height: 820)
+        .defaultSize(width: 1466, height: 1030)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button(L("about.menu")) { AboutWindow.show() }
