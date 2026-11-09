@@ -20,6 +20,7 @@ final class OffloadModel {
     var current = ""
     var results: [Result] = []
     var finished = false
+    var lastDests: [URL] = []
     private var cancelled = false
 
     func chooseSource() { if let u = pick() { source = u; destinations.removeAll { $0 == u } } }
@@ -34,6 +35,7 @@ final class OffloadModel {
         guard let source, !destinations.isEmpty, !running else { return }
         running = true; finished = false; cancelled = false; results = []; done = 0; bytesDone = 0; current = ""
         let dests = destinations.map { $0.appendingPathComponent(source.lastPathComponent, isDirectory: true) }
+        lastDests = dests
         let verify = verify, incremental = incremental, mhl = writeMHL
         Task.detached(priority: .userInitiated) { [self] in
             let files = Self.list(source)
@@ -184,6 +186,7 @@ struct OffloadView: View {
                 if m.finished {
                     let bad = m.results.filter { !$0.ok }
                     Text(bad.isEmpty ? L("off.done") : L("off.errors", bad.count)).font(.system(size: 12, weight: .semibold)).foregroundColor(bad.isEmpty ? Color(hex: 0x4ADE80) : Color(hex: 0xF87171))
+                    if bad.isEmpty { SLink(title: L("atelier.reveal")) { NSWorkspace.shared.activateFileViewerSelecting(m.lastDests) } }
                     ForEach(bad) { r in Text("\(r.file) : \(r.note)").font(.system(size: 11)).foregroundColor(Color(hex: 0xF87171)).lineLimit(2) }
                 }
             }.padding(28).frame(maxWidth: 800, alignment: .leading).frame(maxWidth: .infinity)

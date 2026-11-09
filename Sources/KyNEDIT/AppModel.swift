@@ -12,6 +12,7 @@ final class AppModel {
     let offload = OffloadModel()
     let atelier: AtelierModel
     var tab: Tab = .explorer
+    var queueNote: String?   // retour après « Ajouter à la file » (disparaît seul)
     var selected: Clip?
     var selection: Set<String> = []
     var selectedInfo: MediaInfo?
@@ -116,10 +117,16 @@ final class AppModel {
     func addExport(_ clip: Clip) {
         let catalog = catalog, lut = exports.useLUT ? player.lutURL?.path : nil
         Task { let subs = await catalog.subclips(path: clip.path); exports.add(clip: clip, subclips: subs, lutPath: lut) }
+        noteQueued(1)
+    }
+
+    private func noteQueued(_ n: Int) {
+        queueNote = L("exports.added", n)
+        Task { try? await Task.sleep(for: .seconds(8)); queueNote = nil }
     }
 
     /// Tous les clips vidéo sélectionnés, dans l'ordre de la liste.
-    func addSelectionToExport() { for c in clips where selection.contains(c.path) && c.kind == .video { addExport(c) } }
+    func addSelectionToExport() { let list = clips.filter { selection.contains($0.path) && $0.kind == .video }; for c in list { addExport(c) }; noteQueued(list.count) }
 
     /// Envoie les clips sélectionnés (ou le clip ouvert) vers un logiciel de montage : écrit un FCPXML ou un XML Premiere dans le dossier de sortie.
     func sendToNLE(_ nle: NLE) {

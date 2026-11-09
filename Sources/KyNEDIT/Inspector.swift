@@ -121,6 +121,12 @@ struct InspectorPanel: View {
                             } else {
                                 button(L("action.queue"), main: true) { model.addExport(clip) }
                             }
+                            if let n = model.queueNote {
+                                HStack(spacing: 8) {
+                                    Text(n).font(.system(size: 11)).foregroundColor(Socle.muted).lineLimit(1)
+                                    SLink(title: L("exports.view")) { model.tab = .exports }
+                                }
+                            }
                             VStack(alignment: .leading, spacing: 6) {
                                 SLink(title: L("atelier.open")) { model.atelier.add(model.renameTargets); model.tab = .atelier }
                                 SLink(title: L("rename.link")) { model.showRename = true }

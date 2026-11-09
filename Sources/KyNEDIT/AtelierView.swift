@@ -24,6 +24,7 @@ final class AtelierModel {
     var index = 0
     var items: [TrimItem] = []
     var message = ""
+    var lastFile: URL?   // dernier fichier créé (image fixe, audio seul) : lien « Afficher »
     var jobIDs: [UUID] = []       // tâches d'export lancées depuis l'atelier (suivi de la progression)
     var replaceOriginals = false   // volontairement non mémorisé : toujours décoché au lancement
     @ObservationIgnored weak var app: AppModel?
@@ -97,7 +98,7 @@ final class AtelierModel {
     /// Exporte le clip courant tout de suite (⌘S).
     func exportNow() {
         guard let it = currentItem(), let app, confirmReplace([it]) else { return }
-        message = L("atelier.sent", 1)
+        message = L("atelier.sent", 1); lastFile = nil
         launch([it])
         go(1)
     }
@@ -106,7 +107,7 @@ final class AtelierModel {
     func exportAll() {
         guard !items.isEmpty, let app, confirmReplace(items) else { return }
         let list = items; items = []
-        message = L("atelier.sent", list.count)
+        message = L("atelier.sent", list.count); lastFile = nil
         launch(list)
     }
 
@@ -147,7 +148,7 @@ final class AtelierModel {
             guard let img = try? await gen.image(at: CMTime(seconds: t, preferredTimescale: 600)).image, let d = ThumbService.jpeg(img) else { return }
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             try? d.write(to: dir.appendingPathComponent(name))
-            await MainActor.run { self.message = L("atelier.stillSaved", name) }
+            await MainActor.run { self.message = L("atelier.stillSaved", name); self.lastFile = dir.appendingPathComponent(name) }
         }
     }
 
@@ -162,7 +163,7 @@ final class AtelierModel {
             p.arguments = ["-hide_banner", "-y", "-loglevel", "error", "-nostdin", "-ss", String(format: "%.6f", it.tin), "-i", it.clip.path, "-t", String(format: "%.6f", it.duration), "-vn", "-c:a", "copy", out.path]
             p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
             try? p.run(); p.waitUntilExit()
-            await MainActor.run { self.message = p.terminationStatus == 0 ? L("atelier.audio", out.lastPathComponent) : L("atelier.audiofail") }
+            await MainActor.run { self.message = p.terminationStatus == 0 ? L("atelier.audio", out.lastPathComponent) : L("atelier.audiofail"); self.lastFile = p.terminationStatus == 0 ? out : nil }
         }
     }
 
@@ -244,6 +245,7 @@ struct AtelierView: View {
                 readout(L("atelier.duration"), p.duration > 0 ? PlayerModel.timecode(max(0, b - a), fps: p.fps) : "—", active: true)
                 Spacer(minLength: 8)
                 if !m.message.isEmpty { Text(m.message).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1).truncationMode(.middle) }
+                if let f = m.lastFile { SLink(title: L("atelier.reveal")) { NSWorkspace.shared.activateFileViewerSelecting([f]) }.padding(.leading, 10) }
             }
             HStack(spacing: 8) {
                 tool("◀", key: "↑", help: L("atelier.prev")) { m.go(-1) }

@@ -1,6 +1,7 @@
 // Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
 enum ConvertStrings {
     static let fr: [String: String] = [
+        "exports.added": "%d clip(s) ajouté(s) à la file d'export.", "exports.view": "Voir les exports",
         "atelier.inplace": "Sur place (remplacement)", "atelier.progress": "Export en cours…", "atelier.finished": "Export terminé", "atelier.failed": "%d en erreur", "atelier.reveal": "Afficher dans le Finder",
         "atelier.addall": "Tout ajouter entier", "atelier.addedall": "%d clip(s) entier(s) ajouté(s) à la liste.",
         "atelier.listempty": "La liste est vide. Posez une entrée (I) et une sortie (O) sur un clip, puis ↩ pour y ajouter le passage.",
@@ -33,6 +34,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
     ]
     static let en: [String: String] = [
+        "exports.added": "%d clip(s) added to the export queue.", "exports.view": "View exports",
         "atelier.inplace": "In place (replacing)", "atelier.progress": "Exporting…", "atelier.finished": "Export finished", "atelier.failed": "%d failed", "atelier.reveal": "Show in Finder",
         "atelier.addall": "Add all whole", "atelier.addedall": "%d whole clip(s) added to the list.",
         "atelier.listempty": "The list is empty. Set an in (I) and an out (O) on a clip, then press ↩ to add the trim here.",
@@ -65,6 +67,7 @@ enum ConvertStrings {
         "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
     ]
     static let es: [String: String] = [
+        "exports.added": "%d clip(s) añadido(s) a la cola de exportación.", "exports.view": "Ver exportaciones",
         "atelier.inplace": "En el sitio (reemplazo)", "atelier.progress": "Exportando…", "atelier.finished": "Exportación terminada", "atelier.failed": "%d con error", "atelier.reveal": "Mostrar en el Finder",
         "atelier.addall": "Añadir todo entero", "atelier.addedall": "%d clip(s) entero(s) añadido(s) a la lista.",
         "atelier.listempty": "La lista está vacía. Fije una entrada (I) y una salida (O) en un clip y pulse ↩ para añadir el recorte.",
@@ -97,6 +100,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
     ]
     static let it: [String: String] = [
+        "exports.added": "%d clip aggiunti alla coda di esportazione.", "exports.view": "Vedi esportazioni",
         "atelier.inplace": "Sul posto (sostituzione)", "atelier.progress": "Esportazione in corso…", "atelier.finished": "Esportazione terminata", "atelier.failed": "%d in errore", "atelier.reveal": "Mostra nel Finder",
         "atelier.addall": "Aggiungi tutto intero", "atelier.addedall": "%d clip interi aggiunti all'elenco.",
         "atelier.listempty": "L'elenco è vuoto. Imposta un'entrata (I) e un'uscita (O) su un clip, poi premi ↩ per aggiungere il taglio.",
