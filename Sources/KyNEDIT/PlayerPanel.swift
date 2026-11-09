@@ -106,7 +106,7 @@ struct Timeline: View {
                 Rectangle().fill(.white).frame(width: 2).offset(x: w * min(model.time, d) / d)
             }
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { g in model.seek(Double(g.location.x / max(w, 1)) * d) })
+            .gesture(DragGesture(minimumDistance: 0).onChanged { g in model.scrub(Double(g.location.x / max(w, 1)) * d) }.onEnded { _ in model.endScrub() })
         }.frame(height: 36)
     }
 }

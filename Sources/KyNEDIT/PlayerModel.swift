@@ -24,14 +24,18 @@ final class PlayerModel {
     private var brawTask: Task<Void, Never>?
     private var playLoop: Task<Void, Never>?
     private var observer: Any?
+    private(set) var scrubbing = false
+    private var seekBusy = false
+    private var pendingSeek: Double?
     private let catalog: Catalog
 
     init(catalog: Catalog) {
         self.catalog = catalog
+        player.automaticallyWaitsToMinimizeStalling = false
         observer = player.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 30), queue: .main) { [weak self] t in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                self.time = t.seconds.isFinite ? t.seconds : 0
+                if !self.scrubbing { self.time = t.seconds.isFinite ? t.seconds : 0 }   // pendant un glissement, la tête suit le pointeur, pas le lecteur
                 self.rate = self.player.rate
             }
         }
@@ -95,6 +99,31 @@ final class PlayerModel {
     private func showBRAWFrame(at t: Double) {
         brawTask?.cancel()
         brawTask = Task { [weak self] in await self?.decodeBRAW(at: t) }
+    }
+
+    /// Glissement sur la ligne de temps : la tête suit le pointeur tout de suite ; le lecteur rejoint la dernière position demandée
+    /// (une seule recherche à la fois, sur les images clés : rapide même en GOP long), puis `endScrub` règle l'image exacte.
+    func scrub(_ t: Double) {
+        let c = max(0, min(t, duration > 0 ? duration : t))
+        if !scrubbing { scrubbing = true; if rate != 0 { pause() } }
+        time = c
+        if usesBRAW { showBRAWFrame(at: c); return }
+        pendingSeek = c
+        if !seekBusy { chase() }
+    }
+
+    private func chase() {
+        guard let t = pendingSeek else { return }
+        pendingSeek = nil; seekBusy = true
+        player.seek(to: CMTime(seconds: t, preferredTimescale: 600), toleranceBefore: .positiveInfinity, toleranceAfter: .positiveInfinity) { [weak self] _ in
+            DispatchQueue.main.async { MainActor.assumeIsolated { guard let self else { return }; self.seekBusy = false; if self.pendingSeek != nil { self.chase() } } }
+        }
+    }
+
+    func endScrub() {
+        guard scrubbing else { return }
+        scrubbing = false; pendingSeek = nil
+        if !usesBRAW { player.seek(to: CMTime(seconds: time, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) }
     }
 
     func seek(_ t: Double) {

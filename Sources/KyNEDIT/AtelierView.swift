@@ -369,13 +369,13 @@ struct TrimTimeline: View {
                 ForEach(done) { it in Rectangle().fill(Color(hex: 0x4ADE80).opacity(0.25)).frame(width: max(2, w * it.duration / d)).offset(x: w * it.tin / d) }
                 Rectangle().fill(Color(hex: 0x38BDF8).opacity(0.35)).frame(width: max(2, w * (b - a) / d)).offset(x: w * a / d)
                 handle(at: w * a / d, color: Color(hex: 0x38BDF8)).gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                    model.markIn = min(max(0, Double(g.location.x / max(w, 1)) * d), b - 0.04) })
+                    model.markIn = min(max(0, Double(g.location.x / max(w, 1)) * d), b - 0.04); model.scrub(model.markIn ?? 0) }.onEnded { _ in model.endScrub() })
                 handle(at: w * b / d, color: Color(hex: 0x38BDF8)).gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                    model.markOut = max(min(d, Double(g.location.x / max(w, 1)) * d), a + 0.04) })
+                    model.markOut = max(min(d, Double(g.location.x / max(w, 1)) * d), a + 0.04); model.scrub(model.markOut ?? d) }.onEnded { _ in model.endScrub() })
                 Rectangle().fill(.white).frame(width: 2).offset(x: w * min(model.time, d) / d).allowsHitTesting(false)
             }
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { g in model.seek(Double(g.location.x / max(w, 1)) * d) })
+            .gesture(DragGesture(minimumDistance: 0).onChanged { g in model.scrub(Double(g.location.x / max(w, 1)) * d) }.onEnded { _ in model.endScrub() })
         }.frame(height: 44)
     }
 
