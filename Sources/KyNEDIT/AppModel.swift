@@ -10,6 +10,8 @@ final class AppModel {
     let exports = ExportQueue()
     let convert = ConvertModel()
     let offload = OffloadModel()
+    let atelier: AtelierModel
+    var tab: Tab = .explorer
     var selected: Clip?
     var selection: Set<String> = []
     var selectedInfo: MediaInfo?
@@ -56,6 +58,10 @@ final class AppModel {
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             let chars = e.charactersIgnoringModifiers ?? "", code = e.keyCode, flags = e.modifierFlags
             let handled: Bool = MainActor.assumeIsolated {
+                if let self, self.tab == .atelier {   // l'atelier a ses propres touches
+                    if (NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first)?.firstResponder is NSText { return false }
+                    return self.atelier.handleKey(chars: chars, keyCode: code, flags: flags)
+                }
                 guard let self, self.selected != nil, !flags.contains(.command) else { return false }
                 if (NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first)?.firstResponder is NSText { return false }
                 if let sel = self.selected, let d = Int(chars), (0...8).contains(d) {
@@ -68,7 +74,7 @@ final class AppModel {
         }
     }
 
-    init() { thumbs = ThumbService(catalog: catalog); player = PlayerModel(catalog: catalog); reloadVolumes() }
+    init() { thumbs = ThumbService(catalog: catalog); player = PlayerModel(catalog: catalog); atelier = AtelierModel(catalog: catalog); atelier.app = self; reloadVolumes() }
 
     /// Clic sur une carte : simple = ce clip seul ; Cmd = ajoute ou retire ; Maj = plage depuis le clip précédemment sélectionné.
     func click(_ clip: Clip) {

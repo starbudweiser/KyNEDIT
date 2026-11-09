@@ -122,6 +122,7 @@ struct InspectorPanel: View {
                                 button(L("action.queue"), main: true) { model.addExport(clip) }
                             }
                             VStack(alignment: .leading, spacing: 6) {
+                                SLink(title: L("atelier.open")) { model.atelier.add(model.renameTargets); model.tab = .atelier }
                                 SLink(title: L("rename.link")) { model.showRename = true }
                                 SLink(title: L("export.shotlist")) { model.exportShotlist() }
                                 if clip.kind == .video { SLink(title: L("export.stills")) { model.exportMarkerStills(clip) } }

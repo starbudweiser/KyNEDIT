@@ -1,12 +1,12 @@
 import SwiftUI
 
-enum Tab: CaseIterable { case explorer, convert, offload, exports, performance
-    var key: String { switch self { case .explorer: "tab.explorer"; case .convert: "tab.convert"; case .offload: "tab.offload"; case .exports: "tab.exports"; case .performance: "tab.performance" } }
+enum Tab: CaseIterable { case explorer, atelier, convert, offload, exports, performance
+    var key: String { switch self { case .explorer: "tab.explorer"; case .atelier: "tab.atelier"; case .convert: "tab.convert"; case .offload: "tab.offload"; case .exports: "tab.exports"; case .performance: "tab.performance" } }
 }
 
 struct ContentView: View {
     @State private var model = AppModel()
-    @State private var tab: Tab = .explorer
+    private var tab: Tab { get { model.tab } nonmutating set { model.tab = newValue } }
     private let updateTimer = Timer.publish(every: 600, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -29,6 +29,7 @@ struct ContentView: View {
             .padding(.horizontal, 12).frame(height: 40).background(Socle.surface)
             Divider().overlay(Socle.border)
             if tab == .performance { PerformanceView() }
+            else if tab == .atelier { AtelierView(app: model) }
             else if tab == .convert { ConvertView(app: model) }
             else if tab == .offload { OffloadView(m: model.offload) }
             else if tab == .exports { ExportsView(queue: model.exports) }
@@ -55,6 +56,7 @@ struct ContentView: View {
         }
         .background(Socle.bg)
         .onAppear { model.installKeyMonitor() }
+        .onAppear { if let a = ProcessInfo.processInfo.environment["KYNEDIT_ATELIER"] { model.atelier.add(urls: a.split(separator: ":").map { URL(fileURLWithPath: String($0)) }); model.tab = .atelier } }
         .sheet(isPresented: $model.showRename) { RenameSheet(model: model) }
         .onAppear { // au lancement : fenêtre à taille raisonnable, centrée dans l'écran
             DispatchQueue.main.async {

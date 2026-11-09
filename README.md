@@ -11,6 +11,7 @@ kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). MIT License, © 2026
 - Folder browser with incremental indexing (SQLite, full-text search), thumbnails, grid and list views.
 - Ratings, colour labels, keywords, notes, markers and subclips, all stored in a local catalogue (source files are never modified).
 - Convert tab (EditReady-style): about 60 built-in presets (editing, proxies, Avid, delivery, dailies, camera log to Rec.709) and your own; ProRes (all variants), DNxHR/DNxHD (MOV, MXF OP1a, MXF OP-Atom), H.264, H.265; resize, frame rate, audio track/channel choice, LUT, log to Rec.709 (ARRI, Sony, Panasonic, Canon, Blackmagic, RED), burn-ins (timecode, reel, name, date, text, PNG logo), renaming templates, source folder structure, ALE export. Fastest path: decoded frames go straight to the hardware encoder; picture changes run on the GPU.
+- Workshop tab: large viewer and quick tools. Lossless trimming (no re-encode): I / O set in and out points, Return adds the trim to a list, Cmd+S exports the current clip, Shift+Cmd+S exports the whole list; also still frame and audio-only extraction.
 - Offload tab (Kyno-style): verified copy to up to 4 destinations, MD5 check of every copy, incremental, MHL hash list.
 - Explorer extras: resolution and frame rate filters, batch renaming, CSV shotlist, marker stills.
 - RAW: Blackmagic RAW and RED R3D (CPU and Metal GPU decode) through the manufacturers' SDKs, which are not part of this repository.

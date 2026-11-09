@@ -189,6 +189,20 @@ final class ExportQueue {
         try? ALE.write(to: dir.appendingPathComponent("\(name).ale"), rows: rows)
     }
 
+    /// Passages élagués (atelier) : copie des flux sans réencodage, une tâche par passage.
+    func addTrims(_ items: [TrimItem], outputDir: String) async {
+        var made: [ExportJob] = []
+        for it in items {
+            var st = ConvertSettings(); st.codec = .rewrap; st.wrap = it.wrap; st.template = "{name}_trim"; st.audio = .all
+            let meta = await SourceMeta.load(it.clip)
+            var j = ExportJob(path: it.clip.path, name: "\(it.clip.name) · \(PlayerModel.shortTimecode(it.tin, fps: it.fps))→\(PlayerModel.shortTimecode(it.tout, fps: it.fps))", tin: it.tin, tout: it.tout,
+                              preset: .proRes422HQ, outputDir: outputDir, suffix: "", lutPath: nil)
+            j.convert = st; j.meta = meta; j.clipName = (it.clip.name as NSString).deletingPathExtension
+            made.append(j)
+        }
+        jobs += made; save(); pump()
+    }
+
     /// Ajoute des clips à convertir avec les réglages du module « Convertir ».
     func addConvert(clips: [Clip], settings: ConvertSettings, outputDir: String, root: String?, subclips: (Clip) -> [Subclip]) async {
         let batch = UUID()
