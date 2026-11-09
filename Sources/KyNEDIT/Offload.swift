@@ -175,12 +175,12 @@ struct OffloadView: View {
                     SCheck(title: L("off.mhl"), isOn: $m.writeMHL)
                 }
                 HStack(spacing: 14) {
-                    if m.running { button(L("off.cancel")) { m.cancel() } } else { button(L("off.run"), main: true) { m.run() } }
                     if m.total > 0 {
                         ProgressView(value: m.bytesTotal > 0 ? Double(m.bytesDone) / Double(m.bytesTotal) : 0).tint(Socle.action).frame(maxWidth: 320)
                         Text(L("off.progress", m.done, m.total)).font(.system(size: 12)).foregroundColor(Socle.muted).lineLimit(1)
                     }
                     Spacer(minLength: 0)
+                    if m.running { button(L("off.cancel")) { m.cancel() } } else { button(L("off.run"), main: true) { m.run() } }
                 }.frame(minHeight: 32)
                 if !m.current.isEmpty { Text(m.current).font(.system(size: 11)).foregroundColor(Socle.subtle).lineLimit(1).truncationMode(.middle) }
                 if m.finished {
