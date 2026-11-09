@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 import AppKit
 
@@ -16,6 +17,27 @@ final class AppModel {
     var meta: [String: ClipMeta] = [:]
     var ratingMin = 0 { didSet { refresh() } }
     var colorFilter = 0 { didSet { refresh() } }
+    var heightMin = 0 { didSet { refresh(); probeMissing() } }
+    var fpsFilter = 0.0 { didSet { refresh(); probeMissing() } }
+    private var probeTask: Task<Void, Never>?
+
+    /// Lit en arrière-plan les en-têtes des vidéos du dossier (quelques-unes à la fois) pour que les filtres de résolution et de cadence les voient.
+    func probeMissing() {
+        guard let root, heightMin > 0 || fpsFilter > 0 else { return }
+        probeTask?.cancel()
+        let catalog = catalog, path = root.path
+        probeTask = Task {
+            let todo = await catalog.unprobed(root: path)
+            var done = 0
+            await withTaskGroup(of: Void.self) { g in
+                var it = todo.makeIterator(), running = 0
+                func next() { if let c = it.next() { running += 1; g.addTask { if let i = await Prober.probe(c) { await catalog.saveInfo(i, path: c.path, mtime: c.mtime) } } } }
+                for _ in 0..<6 { next() }
+                while running > 0 { await g.next(); running -= 1; done += 1; if Task.isCancelled { g.cancelAll(); return }; next(); if done % 20 == 0 { refresh() } }
+            }
+            if !Task.isCancelled { refresh() }
+        }
+    }
     var focusTick = 0 // change à chaque sélection : le panneau lecteur reprend alors le clavier (sinon la recherche le garde)
     var gridMode = true
     var root: URL?
@@ -192,11 +214,11 @@ final class AppModel {
     func refresh() {
         guard let root else { return }
         listTask?.cancel()
-        let q = query, catalog = catalog, path = root.path, rMin = ratingMin, colorF = colorFilter
+        let q = query, catalog = catalog, path = root.path, rMin = ratingMin, colorF = colorFilter, hMin = heightMin, fpsF = fpsFilter
         listTask = Task {
             try? await Task.sleep(for: .milliseconds(120)) // regroupe les frappes
             if Task.isCancelled { return }
-            let result = await catalog.list(root: path, query: q, ratingMin: rMin, color: colorF)
+            let result = await catalog.list(root: path, query: q, ratingMin: rMin, color: colorF, minHeight: hMin, fps: fpsF)
             if !Task.isCancelled { clips = result }
             if selected == nil, let name = ProcessInfo.processInfo.environment["KYNEDIT_SELECT"], let c = result.first(where: { $0.name.contains(name) }) {
                 select(c) // sélection automatique pour les essais
@@ -227,5 +249,88 @@ final class AppModel {
                 }
             }
         }
+    }
+
+    // MARK: shotlist et images de marqueurs
+
+    private func csv(_ f: [String]) -> String { f.map { "\"" + $0.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }.joined(separator: ";") }
+
+    /// Liste de plans (CSV ouvrable dans Excel) des clips sélectionnés, ou de tous les clips affichés : métadonnées, mots-clés, marqueurs, sous-clips.
+    func exportShotlist() {
+        let chosen = clips.filter { selection.contains($0.path) }
+        let list = (chosen.isEmpty ? clips : chosen).filter { $0.kind != .image }
+        let catalog = catalog, meta = meta, thumbs = thumbs, dir = exports.outputDir
+        let name = (root?.lastPathComponent ?? "kYNEDIT")
+        Task {
+            var lines = [csv([L("list.name"), "Chemin", L("info.duration"), L("info.resolution"), "i/s", L("info.codec"), L("inspector.rating"), L("inspector.label"), L("inspector.tags"), L("inspector.note"), L("player.markers"), L("player.subclips")])]
+            for c in list {
+                let info = await thumbs.load(c).info
+                let m = meta[c.path] ?? ClipMeta()
+                let marks = await catalog.markers(path: c.path).map { "\(formatDuration($0.time)) \($0.label)" }.joined(separator: " | ")
+                let subs = await catalog.subclips(path: c.path).map { "\($0.name) \(formatDuration($0.tin))-\(formatDuration($0.tout))" }.joined(separator: " | ")
+                lines.append(csv([c.name, c.path, info.map { formatDuration($0.duration) } ?? "", info.map { "\($0.width)x\($0.height)" } ?? "", info.map { String(format: "%.3g", $0.fps) } ?? "", info?.codec ?? "",
+                                  String(m.rating), m.color > 0 ? L("label.\(m.color)") : "", m.tags.joined(separator: ", "), m.note, marks, subs]))
+            }
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let url = URL(fileURLWithPath: dir).appendingPathComponent("\(name)_shotlist.csv")
+            try? ("\u{FEFF}" + lines.joined(separator: "\n") + "\n").write(to: url, atomically: true, encoding: .utf8)
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
+    }
+
+    /// Une image JPEG par marqueur du clip, écrite dans le dossier de sortie.
+    func exportMarkerStills(_ clip: Clip) {
+        let catalog = catalog, dir = URL(fileURLWithPath: exports.outputDir, isDirectory: true)
+        Task.detached {
+            let marks = await catalog.markers(path: clip.path)
+            guard !marks.isEmpty else { return }
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let gen = AVAssetImageGenerator(asset: AVURLAsset(url: URL(fileURLWithPath: clip.path)))
+            gen.appliesPreferredTrackTransform = true
+            gen.requestedTimeToleranceBefore = .zero; gen.requestedTimeToleranceAfter = .zero
+            let base = (clip.name as NSString).deletingPathExtension
+            for (i, m) in marks.enumerated() {
+                guard let img = try? await gen.image(at: CMTime(seconds: m.time, preferredTimescale: 600)).image, let d = ThumbService.jpeg(img) else { continue }
+                let label = m.label.isEmpty ? "" : "_" + m.label.replacingOccurrences(of: "/", with: "-")
+                try? d.write(to: dir.appendingPathComponent(String(format: "%@_%02d%@.jpg", base, i + 1, label)))
+            }
+            await MainActor.run { NSWorkspace.shared.activateFileViewerSelecting([dir]) }
+        }
+    }
+
+    // MARK: renommage par lot
+
+    var showRename = false
+    var renameTemplate = UserDefaults.standard.string(forKey: "renameTemplate") ?? "{name}_{n}" { didSet { UserDefaults.standard.set(renameTemplate, forKey: "renameTemplate") } }
+    var renamePreview: [(old: String, new: String)] = []
+
+    var renameTargets: [Clip] { let c = clips.filter { selection.contains($0.path) }; return c.isEmpty ? (selected.map { [$0] } ?? []) : c }
+
+    func updateRenamePreview() {
+        let targets = renameTargets, tpl = renameTemplate
+        Task {
+            var out: [(String, String)] = []
+            for (i, c) in targets.enumerated() { out.append((c.name, await Self.renamed(c, tpl, i + 1))) }
+            renamePreview = out
+        }
+    }
+
+    nonisolated static func renamed(_ c: Clip, _ tpl: String, _ n: Int) async -> String {
+        let meta = await SourceMeta.load(c)
+        var st = ConvertSettings(); st.template = tpl.replacingOccurrences(of: "{n}", with: String(format: "%03d", n))
+        let stem = Naming.name(template: st.template, clipName: (c.name as NSString).deletingPathExtension, meta: meta, settings: st).replacingOccurrences(of: st.codec.tag, with: "")
+        return c.ext.isEmpty ? stem : stem + "." + (c.name as NSString).pathExtension
+    }
+
+    func applyRename() {
+        let targets = renameTargets, preview = renamePreview, catalog = catalog
+        guard targets.count == preview.count else { return }
+        for (c, p) in zip(targets, preview) where p.new != c.name && !p.new.isEmpty {
+            let old = URL(fileURLWithPath: c.path), new = old.deletingLastPathComponent().appendingPathComponent(p.new)
+            guard !FileManager.default.fileExists(atPath: new.path), (try? FileManager.default.moveItem(at: old, to: new)) != nil else { continue }
+            Task { await catalog.renamePath(from: c.path, to: new.path) }
+        }
+        showRename = false; selection = []
+        if let root { Task { try? await Task.sleep(for: .milliseconds(300)); open(root) } }
     }
 }

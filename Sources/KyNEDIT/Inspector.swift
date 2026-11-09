@@ -121,6 +121,11 @@ struct InspectorPanel: View {
                             } else {
                                 button(L("action.queue"), main: true) { model.addExport(clip) }
                             }
+                            HStack(spacing: 14) {
+                                Text(L("rename.link")).font(.system(size: 11)).foregroundColor(Socle.accentText).onTapGesture { model.showRename = true }
+                                Text(L("export.shotlist")).font(.system(size: 11)).foregroundColor(Socle.accentText).onTapGesture { model.exportShotlist() }
+                                if clip.kind == .video { Text(L("export.stills")).font(.system(size: 11)).foregroundColor(Socle.accentText).onTapGesture { model.exportMarkerStills(clip) } }
+                            }
                         }
                     }
                 }

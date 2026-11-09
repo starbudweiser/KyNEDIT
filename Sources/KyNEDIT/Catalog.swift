@@ -245,7 +245,7 @@ actor Catalog {
     }
 
     /// Fichiers sous un dossier (récursif), filtrés par recherche plein texte (préfixes) si `query` n'est pas vide.
-    func list(root: String, query: String, ratingMin: Int = 0, color: Int = 0, limit: Int = 50_000) -> [Clip] {
+    func list(root: String, query: String, ratingMin: Int = 0, color: Int = 0, minHeight: Int = 0, fps: Double = 0, limit: Int = 50_000) -> [Clip] {
         enum Bind { case text(String), int(Int) }
         var conds = ["(f.folder=? OR f.folder LIKE ? ESCAPE '\\')"]
         var binds: [Bind] = [.text(root), .text(Catalog.likePattern(root))]
@@ -258,6 +258,8 @@ actor Catalog {
         }
         if ratingMin > 0 { conds.append("f.path IN (SELECT path FROM meta WHERE rating>=?)"); binds.append(.int(ratingMin)) }
         if color > 0 { conds.append("f.path IN (SELECT path FROM meta WHERE color=?)"); binds.append(.int(color)) }
+        if minHeight > 0 { conds.append("f.path IN (SELECT path FROM probe WHERE height>=?)"); binds.append(.int(minHeight)) }
+        if fps > 0 { conds.append("f.path IN (SELECT path FROM probe WHERE fps BETWEEN \(fps - 0.05) AND \(fps + 0.05))") }
         let sql = "SELECT f.path,f.name,f.ext,f.size,f.mtime,f.kind FROM files f WHERE " + conds.joined(separator: " AND ") + " ORDER BY f.name COLLATE NOCASE LIMIT ?"
         binds.append(.int(limit))
         var st: OpaquePointer?
@@ -273,5 +275,29 @@ actor Catalog {
         }
         sqlite3_finalize(st)
         return out
+    }
+
+    /// Vidéos du dossier dont les en-têtes ne sont pas encore lus (nécessaires aux filtres de résolution et de cadence).
+    func unprobed(root: String) -> [Clip] {
+        var st: OpaquePointer?
+        sqlite3_prepare_v2(db, "SELECT f.path,f.name,f.ext,f.size,f.mtime,f.kind FROM files f WHERE (f.folder=? OR f.folder LIKE ? ESCAPE '\\') AND f.kind=0 AND NOT EXISTS (SELECT 1 FROM probe p WHERE p.path=f.path AND p.mtime=f.mtime)", -1, &st, nil)
+        sqlite3_bind_text(st, 1, root, -1, transient); sqlite3_bind_text(st, 2, Catalog.likePattern(root), -1, transient)
+        var out: [Clip] = []
+        while sqlite3_step(st) == SQLITE_ROW {
+            out.append(Clip(path: String(cString: sqlite3_column_text(st, 0)), name: String(cString: sqlite3_column_text(st, 1)), ext: String(cString: sqlite3_column_text(st, 2)),
+                            size: sqlite3_column_int64(st, 3), mtime: sqlite3_column_double(st, 4), kind: .video))
+        }
+        sqlite3_finalize(st)
+        return out
+    }
+
+    /// Reporte un changement de chemin sur les notes, mots-clés, marqueurs, sous-clips et en-têtes (les fichiers eux-mêmes sont relus au prochain parcours).
+    func renamePath(from old: String, to new: String) {
+        for t in ["meta", "tags", "markers", "subclips", "probe"] {
+            var st: OpaquePointer?
+            sqlite3_prepare_v2(db, "UPDATE OR REPLACE \(t) SET path=? WHERE path=?", -1, &st, nil)
+            sqlite3_bind_text(st, 1, new, -1, transient); sqlite3_bind_text(st, 2, old, -1, transient)
+            sqlite3_step(st); sqlite3_finalize(st)
+        }
     }
 }

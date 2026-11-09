@@ -118,3 +118,8 @@ AVFoundation ne lit pas certains codecs fréquents en motion design (MOV PNG, An
 - `release.sh <version>` : build hors dossier d'installation, notarisation `_tools/notarize_app.sh`, tag, release GitHub.
 - Icône `assets/AppIcon.icns` (make_icon.sh), README avec section About.
 - Avant toute diffusion : ffmpeg LGPL embarqué, licence de redistribution des SDK BRAW/RED à vérifier.
+
+## 11. Module Convertir, Copier et finitions Kyno (2026-11-09)
+- ConvertEngine.swift : trois chemins (direct matériel, GPU Core Image en demi-flottants, ffmpeg pour DNxHR/DNxHD). Mesures sur un ProRes 4K de 10 s : ProRes→ProRes 2 s, →H.264 1080p 1,1 s, →DNxHR HQ 3 s (lancement compris). `startTask` de Core Image bloque : rendu synchrone.
+- Essais sans fenêtre : KYNEDIT_HEADLESS / KYNEDIT_OFFLOAD / KYNEDIT_SNAPSHOT (l'écran verrouillé empêche les essais par l'interface).
+- À faire : conversion en parallèle par segments pour un seul long clip, rewrap sans réencodage, assemblage de plusieurs clips, audio RAW, vérification visuelle du log→709 sur de vrais rushes, test Premiere.

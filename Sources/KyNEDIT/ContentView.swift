@@ -55,6 +55,7 @@ struct ContentView: View {
         }
         .background(Socle.bg)
         .onAppear { model.installKeyMonitor() }
+        .sheet(isPresented: $model.showRename) { RenameSheet(model: model) }
         .onAppear { // au lancement : fenêtre à taille raisonnable, centrée dans l'écran
             DispatchQueue.main.async {
                 guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (w.screen ?? NSScreen.main)?.visibleFrame else { return }
@@ -165,6 +166,16 @@ struct ClipList: View {
     }
     private var filters: some View {
         HStack(spacing: 10) {
+            Menu {
+                Button(L("filter.res.all")) { model.heightMin = 0 }
+                ForEach([(720, "HD 720+"), (1080, "Full HD 1080+"), (1440, "2K 1440+"), (2160, "UHD 2160+"), (4320, "8K 4320+")], id: \.0) { h in Button(h.1) { model.heightMin = h.0 } }
+            } label: { Text(model.heightMin == 0 ? L("filter.res") : "≥ \(model.heightMin)p").font(.system(size: 11)).foregroundColor(model.heightMin == 0 ? Socle.subtle : Socle.accentText) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            Menu {
+                Button(L("filter.fps.all")) { model.fpsFilter = 0 }
+                ForEach([23.976, 24, 25, 29.97, 30, 50, 59.94, 60], id: \.self) { f in Button(String(format: f.rounded() == f ? "%.0f i/s" : "%.2f i/s", f)) { model.fpsFilter = f } }
+            } label: { Text(model.fpsFilter == 0 ? L("filter.fps") : String(format: model.fpsFilter.rounded() == model.fpsFilter ? "%.0f i/s" : "%.2f i/s", model.fpsFilter)).font(.system(size: 11)).foregroundColor(model.fpsFilter == 0 ? Socle.subtle : Socle.accentText) }
+                .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
             StarRating(value: model.ratingMin, size: 13) { model.ratingMin = model.ratingMin == $0 ? 0 : $0 }
             ForEach(1...3, id: \.self) { c in
                 Circle().fill(labelColors[c]).frame(width: 10, height: 10)
@@ -177,5 +188,27 @@ struct ClipList: View {
     @ViewBuilder func col(_ t: String, _ w: CGFloat?) -> some View {
         Text(t.uppercased()).font(.system(size: 10.5)).tracking(0.6).foregroundColor(Socle.subtle)
             .frame(maxWidth: w == nil ? .infinity : w, alignment: .leading).frame(width: w)
+    }
+}
+
+
+struct RenameSheet: View {
+    @Bindable var model: AppModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(L("rename.title")).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.textStrong)
+            TextField("", text: $model.renameTemplate).textFieldStyle(.plain).padding(6).background(Socle.sunken, in: RoundedRectangle(cornerRadius: 4)).font(.system(size: 12))
+                .onChange(of: model.renameTemplate) { _, _ in model.updateRenamePreview() }
+            Text(L("rename.hint")).font(.system(size: 11)).foregroundColor(Socle.subtle)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(Array(model.renamePreview.enumerated()), id: \.offset) { _, p in
+                        HStack(spacing: 8) { Text(p.old).foregroundColor(Socle.muted); Text("→").foregroundColor(Socle.subtle); Text(p.new).foregroundColor(Socle.text) }.font(.system(size: 11)).lineLimit(1)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }.frame(height: 200).padding(8).background(Socle.sunken, in: RoundedRectangle(cornerRadius: 4))
+            HStack { Spacer(); button(L("rename.cancel")) { model.showRename = false }; button(L("rename.apply"), main: true) { model.applyRename() } }
+        }.padding(20).frame(width: 560).background(Socle.surface).preferredColorScheme(.dark)
+        .onAppear { model.updateRenamePreview() }
     }
 }

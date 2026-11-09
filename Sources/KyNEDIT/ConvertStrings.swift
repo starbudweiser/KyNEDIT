@@ -1,6 +1,9 @@
 // Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
 enum ConvertStrings {
     static let fr: [String: String] = [
+        "rename.link": "Renommer…", "rename.title": "Renommer les clips", "rename.hint": "Variables : {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENOMMER", "rename.cancel": "ANNULER",
+        "export.shotlist": "Shotlist (CSV)", "export.stills": "Images des marqueurs",
+        "filter.res": "Résolution", "filter.res.all": "Toutes résolutions", "filter.fps": "Cadence", "filter.fps.all": "Toutes cadences",
         "tab.offload": "Copier", "off.source": "Source (carte caméra ou dossier)", "off.dest": "Destinations (jusqu'à 4)", "off.add": "AJOUTER UNE DESTINATION", "off.options": "Options", "off.verify": "Vérifier chaque copie (somme MD5)", "off.incremental": "Copie incrémentale : ignorer les fichiers déjà copiés", "off.mhl": "Écrire une liste de hachage (MHL)", "off.run": "COPIER", "off.cancel": "ANNULER", "off.progress": "%d / %d fichiers", "off.done": "Copie terminée, toutes les copies sont vérifiées.", "off.errors": "%d fichier(s) en erreur :",
         "tab.convert": "Convertir", "conv.presets": "Préréglages", "conv.mine": "Mes préréglages", "conv.sources": "Sources",
         "conv.add.selection": "AJOUTER LA SÉLECTION (%d)", "conv.drop": "Glissez des clips ou des dossiers ici, ou ajoutez la sélection de l'explorateur.", "conv.clear": "Vider la liste",
@@ -18,6 +21,9 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
     ]
     static let en: [String: String] = [
+        "rename.link": "Rename…", "rename.title": "Rename clips", "rename.hint": "Variables: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENAME", "rename.cancel": "CANCEL",
+        "export.shotlist": "Shotlist (CSV)", "export.stills": "Marker stills",
+        "filter.res": "Resolution", "filter.res.all": "All resolutions", "filter.fps": "Frame rate", "filter.fps.all": "All frame rates",
         "tab.offload": "Offload", "off.source": "Source (camera card or folder)", "off.dest": "Destinations (up to 4)", "off.add": "ADD A DESTINATION", "off.options": "Options", "off.verify": "Verify every copy (MD5 checksum)", "off.incremental": "Incremental copy: skip files already copied", "off.mhl": "Write a media hash list (MHL)", "off.run": "COPY", "off.cancel": "CANCEL", "off.progress": "%d / %d files", "off.done": "Copy finished, all copies verified.", "off.errors": "%d file(s) with errors:",
         "tab.convert": "Convert", "conv.presets": "Presets", "conv.mine": "My presets", "conv.sources": "Sources",
         "conv.add.selection": "ADD SELECTION (%d)", "conv.drop": "Drop clips or folders here, or add the Explorer selection.", "conv.clear": "Clear list",
@@ -35,6 +41,9 @@ enum ConvertStrings {
         "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
     ]
     static let es: [String: String] = [
+        "rename.link": "Renombrar…", "rename.title": "Renombrar clips", "rename.hint": "Variables: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RENOMBRAR", "rename.cancel": "CANCELAR",
+        "export.shotlist": "Shotlist (CSV)", "export.stills": "Imágenes de marcadores",
+        "filter.res": "Resolución", "filter.res.all": "Todas las resoluciones", "filter.fps": "Velocidad", "filter.fps.all": "Todas las velocidades",
         "tab.offload": "Copiar", "off.source": "Origen (tarjeta de cámara o carpeta)", "off.dest": "Destinos (hasta 4)", "off.add": "AÑADIR UN DESTINO", "off.options": "Opciones", "off.verify": "Verificar cada copia (suma MD5)", "off.incremental": "Copia incremental: omitir archivos ya copiados", "off.mhl": "Escribir una lista de hashes (MHL)", "off.run": "COPIAR", "off.cancel": "CANCELAR", "off.progress": "%d / %d archivos", "off.done": "Copia terminada, todas las copias verificadas.", "off.errors": "%d archivo(s) con errores:",
         "tab.convert": "Convertir", "conv.presets": "Preajustes", "conv.mine": "Mis preajustes", "conv.sources": "Fuentes",
         "conv.add.selection": "AÑADIR SELECCIÓN (%d)", "conv.drop": "Suelte clips o carpetas aquí, o añada la selección del Explorador.", "conv.clear": "Vaciar la lista",
@@ -52,6 +61,9 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
     ]
     static let it: [String: String] = [
+        "rename.link": "Rinomina…", "rename.title": "Rinomina i clip", "rename.hint": "Variabili: {name} {n} {reel} {date} {res} {fps} {tc}", "rename.apply": "RINOMINA", "rename.cancel": "ANNULLA",
+        "export.shotlist": "Shotlist (CSV)", "export.stills": "Immagini dei marker",
+        "filter.res": "Risoluzione", "filter.res.all": "Tutte le risoluzioni", "filter.fps": "Frequenza", "filter.fps.all": "Tutte le frequenze",
         "tab.offload": "Copia", "off.source": "Sorgente (scheda camera o cartella)", "off.dest": "Destinazioni (fino a 4)", "off.add": "AGGIUNGI UNA DESTINAZIONE", "off.options": "Opzioni", "off.verify": "Verifica ogni copia (somma MD5)", "off.incremental": "Copia incrementale: salta i file già copiati", "off.mhl": "Scrivi una lista di hash (MHL)", "off.run": "COPIA", "off.cancel": "ANNULLA", "off.progress": "%d / %d file", "off.done": "Copia terminata, tutte le copie verificate.", "off.errors": "%d file con errori:",
         "tab.convert": "Converti", "conv.presets": "Preset", "conv.mine": "I miei preset", "conv.sources": "Sorgenti",
         "conv.add.selection": "AGGIUNGI SELEZIONE (%d)", "conv.drop": "Trascina qui clip o cartelle, oppure aggiungi la selezione di Esplora.", "conv.clear": "Svuota l'elenco",
