@@ -159,7 +159,8 @@ struct ClipList: View {
                             .foregroundColor(Socle.muted).frame(width: 130, alignment: .leading)
                     }
                     .font(.system(size: 12)).listRowInsets(EdgeInsets(top: 3, leading: 4, bottom: 3, trailing: 7))
-                    .listRowSeparator(.hidden).listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden).listRowBackground(model.selection.contains(c.path) ? Socle.control : Color.clear)
+                    .contentShape(Rectangle()).onTapGesture { model.click(c) }.clipMenu(c, model)
                 }
                 .listStyle(.plain).scrollContentBackground(.hidden)
             }

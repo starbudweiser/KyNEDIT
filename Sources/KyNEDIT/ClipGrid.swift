@@ -26,7 +26,7 @@ struct ClipGrid: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 170, maximum: 260), spacing: 12)], spacing: 12) {
-                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs, selected: model.selection.contains(c.path), meta: model.meta[c.path]).onTapGesture { model.click(c) } }
+                ForEach(model.clips) { c in ClipCard(clip: c, service: model.thumbs, selected: model.selection.contains(c.path), meta: model.meta[c.path]).onTapGesture { model.click(c) }.clipMenu(c, model) }
             }.padding(16)
         }
     }

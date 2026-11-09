@@ -340,3 +340,51 @@ final class AppModel {
         if let root { Task { try? await Task.sleep(for: .milliseconds(300)); open(root) } }
     }
 }
+
+// MARK: menu contextuel (clic droit sur une vignette ou une ligne)
+
+extension AppModel {
+    /// Cibles du menu : la sélection si le clip en fait partie, sinon ce clip seul (qui devient la sélection).
+    func menuTargets(_ c: Clip) -> [Clip] {
+        if selection.contains(c.path) { return clips.filter { selection.contains($0.path) } }
+        selection = [c.path]; select(c)
+        return [c]
+    }
+    func setRatingExact(_ clip: Clip, _ r: Int) { update(clip) { $0.rating = r } }
+    func setColorExact(_ clip: Clip, _ c: Int) { update(clip) { $0.color = c } }
+}
+
+struct ClipMenu: ViewModifier {
+    let clip: Clip
+    let model: AppModel
+
+    func body(content: Content) -> some View {
+        content.contextMenu {
+            let video = clip.kind == .video
+            if video {
+                Button(L("atelier.open")) { model.atelier.add(model.menuTargets(clip)); model.tab = .atelier }
+                Button(L("menu.convert")) { model.convert.add(model.menuTargets(clip)); model.tab = .convert }
+                Button(L("action.queue")) { for c in model.menuTargets(clip) where c.kind == .video { model.addExport(c) } }
+                Menu(L("menu.nle")) { ForEach(NLE.allCases, id: \.self) { n in Button(n.title) { _ = model.menuTargets(clip); model.sendToNLE(n) } } }
+                Divider()
+            }
+            Menu(L("inspector.rating")) {
+                ForEach(0...5, id: \.self) { r in Button(r == 0 ? L("menu.none") : String(repeating: "★", count: r)) { for c in model.menuTargets(clip) { model.setRatingExact(c, r) } } }
+            }
+            Menu(L("inspector.label")) {
+                Button(L("menu.none")) { for c in model.menuTargets(clip) { model.setColorExact(c, 0) } }
+                ForEach(1...3, id: \.self) { k in Button(L("label.\(k)")) { for c in model.menuTargets(clip) { model.setColorExact(c, k) } } }
+            }
+            Divider()
+            Button(L("rename.link")) { _ = model.menuTargets(clip); model.showRename = true }
+            Button(L("export.shotlist")) { _ = model.menuTargets(clip); model.exportShotlist() }
+            Divider()
+            Button(L("menu.reveal")) { NSWorkspace.shared.activateFileViewerSelecting(model.menuTargets(clip).map { URL(fileURLWithPath: $0.path) }) }
+            Button(L("menu.copypath")) {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(model.menuTargets(clip).map(\.path).joined(separator: "\n"), forType: .string)
+            }
+        }
+    }
+}
+extension View { func clipMenu(_ c: Clip, _ model: AppModel) -> some View { modifier(ClipMenu(clip: c, model: model)) } }

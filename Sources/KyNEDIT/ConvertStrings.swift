@@ -1,6 +1,7 @@
 // Textes du module « Convertir » : mêmes clés dans les 4 langues (français rédigé en premier).
 enum ConvertStrings {
     static let fr: [String: String] = [
+        "menu.convert": "Ajouter à Convertir", "menu.nle": "Envoyer vers", "menu.none": "Aucune", "menu.reveal": "Afficher dans le Finder", "menu.copypath": "Copier le chemin",
         "atelier.space": "Espace",
         "tab.atelier": "Atelier", "atelier.empty": "Glissez des vidéos ici, ou envoyez-les depuis l'explorateur, pour les élaguer sans réencodage.", "atelier.clips": "Clips", "atelier.list": "Liste d'export", "atelier.in": "Entrée", "atelier.out": "Sortie", "atelier.duration": "Durée", "atelier.reset": "EFFACER I/O", "atelier.add": "AJOUTER", "atelier.export": "EXPORTER", "atelier.exportall": "EXPORTER LA LISTE (%d)", "atelier.still": "IMAGE", "atelier.audioonly": "AUDIO SEUL", "atelier.prev": "Clip précédent", "atelier.next": "Clip suivant", "atelier.play": "Lecture / pause", "atelier.added": "%@ ajouté à la liste.", "atelier.sent": "%d passage(s) envoyé(s) à l'export.", "atelier.badrange": "La sortie doit suivre l'entrée.", "atelier.stillSaved": "Image enregistrée : %@", "atelier.audio": "Audio enregistré : %@", "atelier.audiofail": "Extraction audio impossible.", "atelier.addsel": "Ajouter la sélection (%d)", "atelier.open": "Ouvrir dans l'atelier", "atelier.lossless": "Sans réencodage : le début se cale sur l'image clé précédente.",
         "conv.custom": "Personnalisé", "conv.channels": "Canaux", "conv.logo.pos": "Position",
@@ -28,6 +29,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW : image seule, sans audio.", "conv.hint.fast": "Sans retouche d'image, la conversion passe directement du décodeur à l'encodeur matériel."
     ]
     static let en: [String: String] = [
+        "menu.convert": "Add to Convert", "menu.nle": "Send to", "menu.none": "None", "menu.reveal": "Show in Finder", "menu.copypath": "Copy path",
         "atelier.space": "Space",
         "tab.atelier": "Workshop", "atelier.empty": "Drop videos here, or send them from the Explorer, to trim them without re-encoding.", "atelier.clips": "Clips", "atelier.list": "Export list", "atelier.in": "In", "atelier.out": "Out", "atelier.duration": "Duration", "atelier.reset": "CLEAR I/O", "atelier.add": "ADD", "atelier.export": "EXPORT", "atelier.exportall": "EXPORT LIST (%d)", "atelier.still": "STILL", "atelier.audioonly": "AUDIO ONLY", "atelier.prev": "Previous clip", "atelier.next": "Next clip", "atelier.play": "Play / pause", "atelier.added": "%@ added to the list.", "atelier.sent": "%d trim(s) sent to export.", "atelier.badrange": "The out point must follow the in point.", "atelier.stillSaved": "Still saved: %@", "atelier.audio": "Audio saved: %@", "atelier.audiofail": "Audio extraction failed.", "atelier.addsel": "Add selection (%d)", "atelier.open": "Open in the workshop", "atelier.lossless": "No re-encoding: the start snaps to the previous keyframe.",
         "conv.custom": "Custom", "conv.channels": "Channels", "conv.logo.pos": "Position",
@@ -55,6 +57,7 @@ enum ConvertStrings {
         "conv.raw.note": "RAW clips: picture only, no audio.", "conv.hint.fast": "With no picture changes, conversion goes straight from the decoder to the hardware encoder."
     ]
     static let es: [String: String] = [
+        "menu.convert": "Añadir a Convertir", "menu.nle": "Enviar a", "menu.none": "Ninguna", "menu.reveal": "Mostrar en el Finder", "menu.copypath": "Copiar la ruta",
         "atelier.space": "Espacio",
         "tab.atelier": "Taller", "atelier.empty": "Suelte vídeos aquí, o envíelos desde el Explorador, para recortarlos sin recodificar.", "atelier.clips": "Clips", "atelier.list": "Lista de exportación", "atelier.in": "Entrada", "atelier.out": "Salida", "atelier.duration": "Duración", "atelier.reset": "BORRAR I/O", "atelier.add": "AÑADIR", "atelier.export": "EXPORTAR", "atelier.exportall": "EXPORTAR LISTA (%d)", "atelier.still": "IMAGEN", "atelier.audioonly": "SOLO AUDIO", "atelier.prev": "Clip anterior", "atelier.next": "Clip siguiente", "atelier.play": "Reproducir / pausa", "atelier.added": "%@ añadido a la lista.", "atelier.sent": "%d recorte(s) enviado(s) a la exportación.", "atelier.badrange": "La salida debe seguir a la entrada.", "atelier.stillSaved": "Imagen guardada: %@", "atelier.audio": "Audio guardado: %@", "atelier.audiofail": "No se pudo extraer el audio.", "atelier.addsel": "Añadir selección (%d)", "atelier.open": "Abrir en el taller", "atelier.lossless": "Sin recodificar: el inicio se ajusta al fotograma clave anterior.",
         "conv.custom": "Personalizado", "conv.channels": "Canales", "conv.logo.pos": "Posición",
@@ -82,6 +85,7 @@ enum ConvertStrings {
         "conv.raw.note": "Clips RAW: solo imagen, sin audio.", "conv.hint.fast": "Sin cambios de imagen, la conversión pasa directamente del decodificador al codificador de hardware."
     ]
     static let it: [String: String] = [
+        "menu.convert": "Aggiungi a Converti", "menu.nle": "Invia a", "menu.none": "Nessuna", "menu.reveal": "Mostra nel Finder", "menu.copypath": "Copia il percorso",
         "atelier.space": "Spazio",
         "tab.atelier": "Officina", "atelier.empty": "Trascina qui i video, o inviali da Esplora, per tagliarli senza ricodifica.", "atelier.clips": "Clip", "atelier.list": "Elenco di esportazione", "atelier.in": "Entrata", "atelier.out": "Uscita", "atelier.duration": "Durata", "atelier.reset": "CANCELLA I/O", "atelier.add": "AGGIUNGI", "atelier.export": "ESPORTA", "atelier.exportall": "ESPORTA ELENCO (%d)", "atelier.still": "IMMAGINE", "atelier.audioonly": "SOLO AUDIO", "atelier.prev": "Clip precedente", "atelier.next": "Clip successivo", "atelier.play": "Riproduci / pausa", "atelier.added": "%@ aggiunto all'elenco.", "atelier.sent": "%d taglio/i inviato/i all'esportazione.", "atelier.badrange": "L'uscita deve seguire l'entrata.", "atelier.stillSaved": "Immagine salvata: %@", "atelier.audio": "Audio salvato: %@", "atelier.audiofail": "Estrazione audio non riuscita.", "atelier.addsel": "Aggiungi selezione (%d)", "atelier.open": "Apri nell'officina", "atelier.lossless": "Senza ricodifica: l'inizio si allinea al fotogramma chiave precedente.",
         "conv.custom": "Personalizzato", "conv.channels": "Canali", "conv.logo.pos": "Posizione",
