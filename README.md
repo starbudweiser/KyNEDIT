@@ -4,7 +4,7 @@ A personal, simplified, high-performance macOS media browser and transcoder: Kyn
 
 ## About
 
-kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). Part of the **DESKTOP MAC TOOLKIT**. MIT License, © 2026 Starbudweiser. Provided as is, without warranty. Inspired by Kyno (Lesspain Software) and EditReady (Divergent Media), not affiliated with either. See "About kYNEDIT" in the app menu.
+kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). Part of the **DESKTOP MAC TOOLKIT**. MIT License for the source code, © 2026 Starbudweiser; the compiled app, which embeds the RED and Blackmagic RAW SDK libraries, is distributed under an end user license agreement (see "License agreement and third-party notices" in the app menu, and `legal/`). Provided as is, without warranty. Inspired by Kyno (Lesspain Software) and EditReady (Divergent Media), not affiliated with either. See "About kYNEDIT" in the app menu.
 
 ![The kYNEDIT Convert tab with three clips queued and the ProRes 422 HQ preset selected.](docs/screenshot.png)
 
@@ -16,7 +16,7 @@ kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). Part of the **DESKTO
 - Workshop tab: large viewer and quick tools. Lossless trimming (no re-encode): I / O set in and out points, Return adds the trim to a list, Cmd+S exports the current clip, Shift+Cmd+S exports the whole list; also still frame and audio-only extraction.
 - Offload tab (Kyno-style): verified copy to up to 4 destinations, MD5 check of every copy, incremental, MHL hash list.
 - Explorer extras: resolution and frame rate filters, batch renaming, CSV shotlist, marker stills.
-- RAW: Blackmagic RAW and RED R3D (CPU and Metal GPU decode) through the manufacturers' SDKs, which are not part of this repository.
+- RAW: Blackmagic RAW and RED R3D (CPU and Metal GPU decode) through the manufacturers' SDKs, which are not part of this repository. RED, R3D, Blackmagic Design and Blackmagic RAW are trademarks of their owners; kYNEDIT is not certified or endorsed by them.
 - Exchange files for DaVinci Resolve and Final Cut Pro (FCPXML 1.11) and Premiere Pro (xmeml; import not yet tested).
 - Automatic updates from GitHub releases (Developer ID signature checked, never during an export). Languages: French, English, Spanish, Italian.
 

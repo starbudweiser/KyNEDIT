@@ -32,6 +32,7 @@ enum Strings {
         "about.license": "Licence MIT. © 2026 Starbudweiser.",
         "about.disclaimer": "Inspiré de Kyno et d'EditReady, sans lien avec leurs éditeurs.",
         "about.credit": "Réalisé avec Claude Code.",
+        "legal.menu": "Contrat de licence et mentions tierces", "legal.tab.eula": "Contrat de licence", "legal.tab.notices": "Mentions tierces", "legal.missing": "Texte introuvable dans l'application.", "legal.about": "Contient les SDK RED et Blackmagic RAW : voir le contrat de licence.", "legal.button": "CONTRAT DE LICENCE ET MENTIONS…",
         "menu.quit": "Quitter kYNEDIT",
     ]
     static let en: [String: String] = [
@@ -62,6 +63,7 @@ enum Strings {
         "about.license": "MIT License. © 2026 Starbudweiser.",
         "about.disclaimer": "Inspired by Kyno and EditReady, not affiliated with their publishers.",
         "about.credit": "Built with Claude Code.",
+        "legal.menu": "License agreement and third-party notices", "legal.tab.eula": "License agreement", "legal.tab.notices": "Third-party notices", "legal.missing": "Text not found in the application.", "legal.about": "Includes the RED and Blackmagic RAW SDKs: see the license agreement.", "legal.button": "LICENSE AND NOTICES…",
         "menu.quit": "Quit kYNEDIT",
     ]
     static let es: [String: String] = [
@@ -92,6 +94,7 @@ enum Strings {
         "about.license": "Licencia MIT. © 2026 Starbudweiser.",
         "about.disclaimer": "Inspirado en Kyno y EditReady, sin relación con sus editores.",
         "about.credit": "Creado con Claude Code.",
+        "legal.menu": "Contrato de licencia y avisos de terceros", "legal.tab.eula": "Contrato de licencia", "legal.tab.notices": "Avisos de terceros", "legal.missing": "Texto no encontrado en la aplicación.", "legal.about": "Incluye los SDK de RED y Blackmagic RAW: consulta el contrato de licencia.", "legal.button": "LICENCIA Y AVISOS…",
         "menu.quit": "Salir de kYNEDIT",
     ]
     static let it: [String: String] = [
@@ -122,6 +125,7 @@ enum Strings {
         "about.license": "Licenza MIT. © 2026 Starbudweiser.",
         "about.disclaimer": "Ispirato a Kyno ed EditReady, senza legami con i loro editori.",
         "about.credit": "Realizzato con Claude Code.",
+        "legal.menu": "Contratto di licenza e avvisi di terzi", "legal.tab.eula": "Contratto di licenza", "legal.tab.notices": "Avvisi di terzi", "legal.missing": "Testo non trovato nell'applicazione.", "legal.about": "Include gli SDK di RED e Blackmagic RAW: vedi il contratto di licenza.", "legal.button": "LICENZA E AVVISI…",
         "menu.quit": "Esci da kYNEDIT",
     ]
 }

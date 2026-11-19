@@ -1,0 +1,54 @@
+kYNEDIT — CONTRATTO DI LICENZA PER L'UTENTE FINALE
+Versione 1.0 — 19 novembre 2026
+
+Leggi questo contratto. Usando kYNEDIT lo accetti. Se non lo accetti, non usare l'Applicazione.
+
+1. OGGETTO
+Questo contratto è stipulato tra te e Starbudweiser (lo «Sviluppatore»). Riguarda l'applicazione kYNEDIT compilata, come distribuita (l'«Applicazione»), comprese le librerie che incorpora: le librerie dinamiche dell'SDK RED R3D fornite da RED Digital Cinema («RED») e il framework dell'SDK Blackmagic RAW fornito da Blackmagic Design («Blackmagic») (insieme, i «Componenti di terzi»). La licenza MIT pubblicata con il codice sorgente di kYNEDIT si applica solo a quel codice sorgente. Non ti dà alcun diritto sui Componenti di terzi né il diritto di ridistribuire l'Applicazione compilata che li contiene.
+
+2. LICENZA
+Lo Sviluppatore ti concede un diritto limitato, non esclusivo e non trasferibile di usare l'Applicazione sui computer che possiedi o controlli. Puoi fare copie di archivio o di backup solo nei limiti consentiti dalla legge. Non è concesso alcun altro diritto.
+
+3. RESTRIZIONI
+Non puoi:
+(a) distribuire, vendere, concedere in sublicenza, noleggiare, prestare o dare in locazione l'Applicazione o una sua parte, compresi i Componenti di terzi;
+(b) estrarre i Componenti di terzi dall'Applicazione o usarli separatamente;
+(c) effettuare il reverse engineering, decompilare, disassemblare o tentare in altro modo di scoprire il codice sorgente, i formati di file o i protocolli dell'Applicazione o dei Componenti di terzi, salvo nella misura in cui la legge applicabile lo consenta nonostante questa restrizione;
+(d) rimuovere o alterare avvisi di copyright, di marchio o di proprietà;
+(e) usare l'Applicazione in violazione di una legge.
+
+4. ALTRO SOFTWARE RED
+Se ti serve altro software RED per usare una funzione dell'Applicazione, devi ottenerlo tu stesso con una licenza valida. L'uso di quel software è regolato dalle condizioni che lo accompagnano.
+
+5. PROPRIETÀ E MARCHI
+Lo Sviluppatore e i suoi fornitori, inclusi RED e Blackmagic, mantengono tutti i diritti, titoli e interessi sui rispettivi componenti. Questo contratto non trasferisce alcuna proprietà. RED, R3D, Blackmagic Design e Blackmagic RAW sono marchi dei rispettivi proprietari. Sono citati solo per descrivere i formati di file che l'Applicazione legge. L'Applicazione non è certificata, approvata né garantita da RED o Blackmagic.
+
+6. COMPONENTI DI TERZI
+Gli avvisi sui Componenti di terzi sono disponibili nell'Applicazione (menu kYNEDIT, «Contratto di licenza e avvisi di terzi»). Le licenze lì citate si applicano a quei componenti.
+
+7. AGGIORNAMENTI
+L'Applicazione può scaricare aggiornamenti. Una versione aggiornata è coperta da questo contratto, salvo che ne includa uno nuovo.
+
+8. NESSUNA GARANZIA
+L'Applicazione è fornita «così com'è», senza garanzie di alcun tipo. Lo Sviluppatore e i suoi fornitori, inclusi RED e Blackmagic, escludono ogni garanzia, condizione e dichiarazione, espressa o implicita, in particolare di commerciabilità, qualità soddisfacente, idoneità a uno scopo particolare e non violazione di diritti.
+
+9. LIMITAZIONE DI RESPONSABILITÀ
+Nella massima misura consentita dalla legge, né lo Sviluppatore né i suoi fornitori, inclusi RED e Blackmagic, rispondono di danni indiretti, incidentali, speciali o consequenziali, né di mancati profitti, perdita di dati o di risparmi, derivanti da questo contratto o dall'uso dell'Applicazione, anche se informati della loro possibilità. Nulla in questo contratto esclude o limita una responsabilità che la legge non consente di escludere o limitare, né i tuoi diritti inderogabili di consumatore.
+
+10. RISOLUZIONE
+Questo contratto termina automaticamente se lo violi. Devi allora smettere di usare l'Applicazione ed eliminarne tutte le copie. Gli articoli 3, 5, 8, 9, 11 e 12 restano validi dopo la risoluzione.
+
+11. ESPORTAZIONE
+Devi rispettare le leggi sul controllo delle esportazioni a te applicabili. Non devi usare l'Applicazione in un paese o in un modo che tali leggi vietano.
+
+12. TERZI BENEFICIARI
+RED e Blackmagic sono beneficiari designati degli articoli 3, 5, 8 e 9 e possono farli valere direttamente nei tuoi confronti.
+
+13. LEGGE APPLICABILE
+Questo contratto è regolato dalla legge francese, fatte salve le norme inderogabili di tutela dei consumatori del tuo paese di residenza. Le controversie spettano ai tribunali competenti in Francia, salvo che una norma inderogabile ti consenta di adirne altri.
+
+14. LINGUE
+Le versioni in francese, spagnolo e italiano sono fornite per comodità. In caso di differenze rispetto alla versione inglese, prevale la versione inglese.
+
+Contatto: https://github.com/starbudweiser/KyNEDIT
+© 2026 Starbudweiser. Tutti i diritti riservati sull'Applicazione compilata, salvo quanto previsto da questo contratto.

@@ -21,6 +21,8 @@ enum AboutWindow {
                 Text(L("about.license"))
                 Brand.text(L("about.disclaimer")).foregroundColor(.secondary)
                 Brand.text(L("about.credit")).foregroundColor(.secondary)
+                Text(L("legal.about")).foregroundColor(.secondary)
+                Button(L("legal.button")) { LegalWindow.show() }
             }
             .font(.system(size: 12)).multilineTextAlignment(.center)
             .frame(width: 300).padding(28)

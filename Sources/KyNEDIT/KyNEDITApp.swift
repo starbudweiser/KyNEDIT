@@ -15,6 +15,7 @@ struct KyNEDITApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button(L("about.menu")) { AboutWindow.show() }
+                Button(L("legal.menu")) { LegalWindow.show() }
             }
         }
         Settings { SettingsView() }

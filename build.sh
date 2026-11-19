@@ -13,6 +13,11 @@ cp "$BIN" "$APP/Contents/MacOS/$NAME"
 # SDK RED : bibliothèques dynamiques à côté de l'exécutable (Redistributable, copiées telles quelles).
 if [ -d vendor/R3DSDK/Redistributable/mac ]; then mkdir -p "$APP/Contents/Frameworks"; cp vendor/R3DSDK/Redistributable/mac/*.dylib "$APP/Contents/Frameworks/"; fi
 if [ -d vendor/BlackmagicRawAPI.framework ]; then mkdir -p "$APP/Contents/Frameworks"; ditto vendor/BlackmagicRawAPI.framework "$APP/Contents/Frameworks/BlackmagicRawAPI.framework"; fi
+# Textes légaux (contrat de licence, mentions tierces) ; document des licences tierces de Blackmagic, issu du SDK (vendor/, hors dépôt).
+mkdir -p "$APP/Contents/Resources/Legal"; cp legal/*.txt "$APP/Contents/Resources/Legal/"
+if [ -d vendor/BlackmagicRawAPI.framework ] && [ -f "vendor/BRAW-SDK-docs/Third Party Licenses.rtf" ]; then
+  textutil -convert txt -output "$APP/Contents/Resources/Legal/ThirdParty-BlackmagicRAW.txt" "vendor/BRAW-SDK-docs/Third Party Licenses.rtf"
+fi
 ICON=""; for f in assets/*.icns; do [ -f "$f" ] && { cp "$f" "$APP/Contents/Resources/AppIcon.icns"; ICON="AppIcon"; }; done
 cat > "$APP/Contents/Info.plist" <<PL
 <?xml version="1.0" encoding="UTF-8"?>

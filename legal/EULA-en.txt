@@ -1,0 +1,54 @@
+kYNEDIT — END USER LICENSE AGREEMENT
+Version 1.0 — November 19, 2026
+
+Please read this agreement. By using kYNEDIT you accept it. If you do not accept it, do not use the Application.
+
+1. SCOPE
+This agreement is between you and Starbudweiser (the "Developer"). It covers the compiled kYNEDIT application as distributed (the "Application"), including the libraries it embeds: the RED R3D SDK dynamic libraries supplied by RED Digital Cinema ("RED"), and the Blackmagic RAW SDK framework supplied by Blackmagic Design ("Blackmagic") (together, the "Third-Party Components"). The MIT License published with the kYNEDIT source code applies to that source code only. It gives you no right in the Third-Party Components and no right to redistribute the compiled Application that includes them.
+
+2. LICENSE
+The Developer grants you a limited, non-exclusive, non-transferable right to use the Application on computers that you own or control. You may make archival or backup copies only as far as the law allows. No other right is granted.
+
+3. RESTRICTIONS
+You may not:
+(a) distribute, sell, sublicense, rent, lend or lease the Application or any part of it, including the Third-Party Components;
+(b) extract the Third-Party Components from the Application or use them separately from it;
+(c) reverse engineer, decompile, disassemble or otherwise attempt to discover the source code, file formats or protocols of the Application or of the Third-Party Components, except to the extent that applicable law allows it despite this restriction;
+(d) remove or alter any copyright, trademark or other proprietary notice;
+(e) use the Application in breach of any law.
+
+4. OTHER RED SOFTWARE
+If you need other RED software to use a feature of the Application, you must obtain it yourself under a valid license. Your use of that software is governed by the terms that come with it.
+
+5. OWNERSHIP AND TRADEMARKS
+The Developer and its suppliers, including RED and Blackmagic, keep all rights, title and interest in their respective components. This agreement transfers no ownership. RED, R3D, Blackmagic Design and Blackmagic RAW are trademarks of their respective owners. They are named only to describe the file formats the Application reads. The Application is not certified, endorsed or guaranteed by RED or Blackmagic.
+
+6. THIRD-PARTY COMPONENTS
+The notices for the Third-Party Components are available in the Application (kYNEDIT menu, "License agreement and third-party notices"). The licenses named there apply to those components.
+
+7. UPDATES
+The Application can download updates. An updated version is covered by this agreement unless it comes with a new one.
+
+8. NO WARRANTY
+The Application is provided "as is", without warranty of any kind. The Developer and its suppliers, including RED and Blackmagic, disclaim all warranties, conditions and representations, express or implied, including those of merchantability, satisfactory quality, fitness for a particular purpose and non-infringement.
+
+9. LIMITATION OF LIABILITY
+To the maximum extent permitted by law, neither the Developer nor its suppliers, including RED and Blackmagic, are liable for any indirect, incidental, special or consequential damages, or for any lost profits, lost data or lost savings, arising from this agreement or from the use of the Application, even if they were told such damages were possible. Nothing in this agreement excludes or limits a liability that the law does not allow to be excluded or limited, or your mandatory rights as a consumer.
+
+10. TERMINATION
+This agreement ends automatically if you breach it. You must then stop using the Application and delete all copies. Sections 3, 5, 8, 9, 11 and 12 survive termination.
+
+11. EXPORT
+You must comply with the export control laws that apply to you. You must not use the Application in any country or in any way that those laws forbid.
+
+12. THIRD-PARTY BENEFICIARIES
+RED and Blackmagic are intended beneficiaries of sections 3, 5, 8 and 9 and may enforce them directly against you.
+
+13. GOVERNING LAW
+This agreement is governed by French law, without prejudice to the mandatory consumer-protection rules of your country of residence. Disputes go to the competent courts in France, unless mandatory law gives you the right to bring them elsewhere.
+
+14. LANGUAGES
+The French, Spanish and Italian versions are provided for convenience. If they differ from the English version, the English version prevails.
+
+Contact: https://github.com/starbudweiser/KyNEDIT
+© 2026 Starbudweiser. All rights reserved on the compiled Application, except as stated in this agreement.
