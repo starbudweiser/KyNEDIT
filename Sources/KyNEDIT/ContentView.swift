@@ -12,6 +12,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
+                Color.clear.frame(width: 80, height: 1) // boutons de fenêtre (règle Socle : départ du nom à 104 px)
                 Brand.text(Brand.name).font(.system(size: 13, weight: .semibold)).foregroundColor(Socle.textStrong)
                 ForEach(Tab.allCases, id: \.self) { t in
                     Text(L(t.key) + (t == .exports && model.exports.pendingCount > 0 ? " (\(model.exports.pendingCount))" : "")).font(.system(size: 12))
@@ -26,7 +27,7 @@ struct ContentView: View {
                     .background(Socle.sunken, in: RoundedRectangle(cornerRadius: 5))
                 if model.root != nil { button(L("action.open")) { model.chooseFolder() } }
             }
-            .padding(.horizontal, 12).frame(height: 40).background(Socle.surface)
+            .padding(.leading, 12).padding(.trailing, 18).frame(height: 52).background(Socle.surface)
             Divider().overlay(Socle.border)
             if tab == .performance { PerformanceView() }
             else if tab == .atelier { AtelierView(app: model) }
@@ -55,6 +56,7 @@ struct ContentView: View {
             } }
         }
         .background(Socle.bg)
+        .ignoresSafeArea(.container, edges: .top)
         .onAppear { model.installKeyMonitor() }
         .onAppear { if let a = ProcessInfo.processInfo.environment["KYNEDIT_ATELIER"] { model.atelier.add(urls: a.split(separator: ":").map { URL(fileURLWithPath: String($0)) }); model.tab = .atelier } }
         .sheet(isPresented: $model.showRename) { RenameSheet(model: model) }
@@ -62,6 +64,8 @@ struct ContentView: View {
             DispatchQueue.main.async {
                 guard let w = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }), let v = (NSScreen.screens.first ?? NSScreen.main)?.visibleFrame else { return }
                 let size = NSSize(width: min(1466, v.width * 0.95), height: min(1030, v.height * 0.95))
+                w.styleMask.insert(.fullSizeContentView); w.titlebarAppearsTransparent = true; w.titleVisibility = .hidden
+                TrafficLights.install(w)
                 w.setFrame(NSRect(x: v.midX - size.width / 2, y: v.midY - size.height / 2, width: size.width, height: size.height), display: true)
             }
         }
@@ -217,5 +221,25 @@ struct RenameSheet: View {
             HStack { Spacer(); button(L("rename.cancel")) { model.showRename = false }; button(L("rename.apply"), main: true) { model.applyRename() } }
         }.padding(20).frame(width: 560).background(Socle.surface).preferredColorScheme(.dark)
         .onAppear { model.updateRenamePreview() }
+    }
+}
+
+/// Règle Socle « Haut de la fenêtre » : boutons de fenêtre centrés sur l'axe de la rangée du haut (52 px), à 20 px du bord.
+@MainActor enum TrafficLights {
+    static let rowHeight: CGFloat = 52
+    static func install(_ w: NSWindow) {
+        place(w)
+        for n in [NSWindow.didResizeNotification, NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification, NSWindow.didExitFullScreenNotification, NSWindow.didEndLiveResizeNotification] {
+            NotificationCenter.default.addObserver(forName: n, object: w, queue: .main) { _ in MainActor.assumeIsolated { place(w) } }
+        }
+    }
+    static func place(_ w: NSWindow) {
+        let kinds: [NSWindow.ButtonType] = [.closeButton, .miniaturizeButton, .zoomButton]
+        let btns = kinds.compactMap { w.standardWindowButton($0) }
+        guard btns.count == 3, let bar = btns[0].superview else { return }
+        let step = btns[1].frame.minX - btns[0].frame.minX
+        let h = btns[0].frame.height
+        let y = bar.isFlipped ? rowHeight / 2 - h / 2 : bar.frame.height - rowHeight / 2 - h / 2
+        for (i, b) in btns.enumerated() { b.setFrameOrigin(NSPoint(x: 20 + CGFloat(i) * max(step, 20), y: y)) }
     }
 }
