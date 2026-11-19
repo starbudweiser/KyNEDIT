@@ -42,7 +42,7 @@ struct PlayerPanel: View {
                     Text(p.timecode).font(.system(size: 14, weight: .semibold).monospacedDigit()).foregroundColor(Socle.textStrong).fixedSize()
                     Text(p.rate == 0 ? "■" : String(format: "%@%.0f×", p.rate < 0 ? "◀ " : "▶ ", abs(p.rate))).foregroundColor(Socle.muted)
                     Spacer()
-                    Text("I \(p.markIn.map { PlayerModel.timecode($0, fps: p.fps) } ?? "—")   O \(p.markOut.map { PlayerModel.timecode($0, fps: p.fps) } ?? "—")")
+                    Text("\(L("player.in")) \(p.markIn.map { PlayerModel.timecode($0, fps: p.fps) } ?? "—")   \(L("player.out")) \(p.markOut.map { PlayerModel.timecode($0, fps: p.fps) } ?? "—")")
                         .font(.system(size: 11).monospacedDigit()).foregroundColor(Socle.subtle)
                 }
                 Timeline(model: p)

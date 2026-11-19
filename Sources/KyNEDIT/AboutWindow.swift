@@ -17,6 +17,7 @@ enum AboutWindow {
                 Text(L("about.version", version, build)).foregroundColor(.secondary)
                 Brand.text(L("about.tagline"))
                 Text(L("about.authors")).bold()
+                Text(L("about.collection"))
                 Text(L("about.license"))
                 Brand.text(L("about.disclaimer")).foregroundColor(.secondary)
                 Brand.text(L("about.credit")).foregroundColor(.secondary)

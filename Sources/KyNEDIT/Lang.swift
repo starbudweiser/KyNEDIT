@@ -1,13 +1,12 @@
 import Foundation
 
-/// Langue de l'interface : celle du système si c'est fr/en/es/it, sinon anglais.
+/// Langue de l'interface : première langue préférée du système parmi fr/en/es/it, sinon anglais.
 enum Lang {
     static let supported = ["fr", "en", "es", "it"]
     static let current: String = {
         for id in Locale.preferredLanguages {
             let code = String(id.prefix(2))
-            if supported.contains(code) { return code }
-            break // la langue préférée n'est pas l'une des 4 : anglais
+            if supported.contains(code) { return code } // sinon on essaie la langue préférée suivante
         }
         return "en"
     }()

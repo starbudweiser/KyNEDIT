@@ -4,7 +4,7 @@ A personal, simplified, high-performance macOS media browser and transcoder: Kyn
 
 ## About
 
-kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). MIT License, © 2026 Starbudweiser. Provided as is, without warranty. Inspired by Kyno (Lesspain Software) and EditReady (Divergent Media), not affiliated with either. See "About kYNEDIT" in the app menu.
+kYNEDIT is made by Starbudweiser & Claude Code (Anthropic). Part of the **DESKTOP MAC TOOLKIT**. MIT License, © 2026 Starbudweiser. Provided as is, without warranty. Inspired by Kyno (Lesspain Software) and EditReady (Divergent Media), not affiliated with either. See "About kYNEDIT" in the app menu.
 
 ![The kYNEDIT Convert tab with three clips queued and the ProRes 422 HQ preset selected.](docs/screenshot.png)
 
